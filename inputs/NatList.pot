@@ -1,0 +1,32 @@
+import Bool
+import Nat
+
+append xs ys = case xs of
+                  Nil -> ys
+                | Cons(x,xs) -> Cons(x,append xs ys);
+
+nrev xs = case xs of
+             Nil        -> Nil
+           | Cons(x,xs) -> append (nrev xs) Cons(x,Nil);
+
+qrev xs ys = case xs of
+                Nil        -> ys
+              | Cons(x,xs) -> qrev xs Cons(x,ys);
+
+length xs = case xs of
+               Nil        -> Zero
+             | Cons(x,xs) -> Succ(length xs);
+
+eqNatList xs ys = case xs of
+                     Nil -> (case ys of
+                                Nil -> True
+                              | Cons(y,ys) -> False)
+                   | Cons(x,xs) -> case y of
+                                      Nil -> False
+                                    | Cons(y,ys) -> and (eqNat x y) (eqNatList xs ys);
+
+allNatList p = and (p Nil) (allNat (\x -> allNatList (\xs -> p (Cons(x,xs)))));
+
+exNatList p = or (p Nil) (exNat (\x -> exNatList (\xs -> p (Cons(x,xs)))));
+
+anyNatList f = meet (f Nil) (anyNat (\x -> anyNatList (\xs -> f (Cons(x,xs)))))

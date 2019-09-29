@@ -1,0 +1,31 @@
+import Construct
+
+and x y = case x of 
+             True -> y     
+           | False -> False;  
+        
+or x y = case x of                  
+            True -> True    
+          | False -> y;  
+
+iff x y = case x of                   
+             True -> y            
+           | False -> not y; 
+
+implies x y = case x of              
+                 True -> y           
+               | False -> True;  
+   
+not x = case x of                     
+           True -> False               
+         | False -> True;
+
+eqBool x y = case x of                   
+                True -> y            
+              | False -> not y;
+
+allBool p = and (p True) (p False);
+
+exBool p = or (p True) (p False);
+
+anyBool f = meet (f True) (f False)

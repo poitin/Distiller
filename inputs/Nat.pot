@@ -1,0 +1,45 @@
+import Bool
+
+plus x y = case x of
+              Zero    -> y
+            | Succ(x) -> Succ(plus x y);
+
+minus x y = case y of
+               Zero -> x
+             | Succ(y) -> case x of
+                             Zero -> Zero
+                           | Succ(x) -> minus x y;
+mul x y = case x of
+             Zero    -> Zero
+           | Succ(x) -> plus y (mul x y);
+
+div x y = case (gt y x) of
+             True -> Zero
+           | False -> Succ(div (minus x y) y);
+
+pow x y = case y of             Zero -> Succ(Zero)           | Succ(y) -> mul x (pow x y);
+
+gt x y = case x of
+            Zero -> False
+          | Succ(x) -> case y of
+                          Zero -> True
+                        | Succ(y) -> gt x y;
+
+lt x y = case y of
+            Zero -> False
+          | Succ(y) -> case x of
+                          Zero -> True
+                        | Succ(x) -> lt x y;
+eqNat x y = case x of
+               Zero -> (case y of
+                           Zero -> True
+                         | Succ(y) -> False)
+             | Succ(x) -> case y of
+                             Zero -> False
+                           | Succ(y) -> eqNat x y;
+
+allNat p = and (p Zero) (allNat (\x -> p (Succ(x))));
+
+exNat p = or (p Zero) (exNat (\x -> p (Succ(x))));
+
+anyNat f = meet (f Zero) (anyNat (\x ->f (Succ(x))))

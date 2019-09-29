@@ -1,0 +1,9 @@
+import NatList
+
+main = revrev xs Nil;
+
+revrev xs ys = case xs of
+                   Nil        -> ys
+                 | Cons(x,xs) -> append (revrev xs (Cons(x,ys))) Cons(x,Nil)
+
+

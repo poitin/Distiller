@@ -1,0 +1,12 @@
+import Nat
+
+main = loop n 1;
+
+loop n s = case n of
+              Zero     -> s
+            | Succ(n') -> loop' n Succ(Zero) n' s;
+
+loop' i p n s = case i of
+                   Zero     -> loop n (plus s p)
+                 | Succ(i') -> loop' i' (mul i p) n s
+
