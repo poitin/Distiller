@@ -36,12 +36,9 @@ helpMessage = "\n:load filename\t\tTo load the given filename\n"++
                ":prog\t\t\tTo print the current program\n"++
                ":term\t\t\tTo print the current term\n"++
                ":eval\t\t\tTo evaluate the current term\n"++
-               ":super\t\t\tTo supercompile the current program\n"++
                ":distill\t\t\tTo distill the current program\n"++
-               ":trans level\t\t\tTo transform the current program at the given level\n"++
                ":quit\t\t\tTo quit\n"++
                ":help\t\t\tTo print this message\n"
-
 
 -- Entry point for main program
 
