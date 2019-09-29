@@ -1,0 +1,9 @@
+import Nat
+
+main = ack m n;
+
+ack m n = case m of
+             Zero -> Succ(n)
+           | Succ(m') -> case n of
+                            Zero -> ack m' Succ(Zero)
+                          | Succ(n') -> ack m' (ack m n')
