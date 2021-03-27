@@ -1,12 +1,15 @@
 module Term where
 
+import Exception
+import Prelude hiding ((<>))
 import Data.Char
 import Data.Maybe
 import Data.List
+import Data.Tuple
 import Data.Foldable
 import Control.Monad
 import Text.PrettyPrint.HughesPJ as P
-import Text.ParserCombinators.Parsec
+import Text.ParserCombinators.Parsec hiding (labels)
 import Text.ParserCombinators.Parsec.Expr
 import qualified Text.ParserCombinators.Parsec.Token as T
 import Text.ParserCombinators.Parsec.Language
@@ -19,11 +22,12 @@ data Term = Free String -- free variable
           | Bound Int -- bound variable with de Bruijn index
           | Lambda String Term -- lambda abstraction
           | Con String [Term] -- constructor application
+          | Apply Term Term -- application
           | Fun String -- function call
-          | Apply Term [Term] -- application
           | Case Term [(String,[String],Term)] -- case expression
-          | Let String Term Term -- temporary let expression
-          | Letrec String [String] Term Term -- local function
+          | Let String Term Term -- let expression
+          | Unfold Term Term -- unfolding
+          | Fold Term Term -- folding
 
 instance Show Term where
    show t = render $ prettyTerm t
@@ -35,203 +39,227 @@ showProg p = render $ prettyProg p
 -- equality of terms
 
 instance Eq Term where
-   (==) t t' = eqTerm [] [] (t,t')
+   (==) t t' = eqTerm (t,t')
 
-eqTerm s1 s2 (Free x,t) | x `elem` fst(unzip s1) = eqTerm [] [] (instantiate s1 (Free x),instantiate s2 t)
-eqTerm s1 s2 (Free x,Free x') = x==x'
-eqTerm s1 s2 (Bound i,Bound i') = i==i'
-eqTerm s1 s2 (Lambda x t,Lambda x' t') = eqTerm s1 s2 (t,t')
-eqTerm s1 s2 (Con c ts,Con c' ts') | c==c' = all (eqTerm s1 s2) (zip ts ts')
-eqTerm s1 s2 (Fun f,Fun f') = f==f'
-eqTerm s1 s2 (Apply (Bound i) ts,Apply (Bound i') ts') = i==i'
-eqTerm s1 s2 (Apply t ts,Apply t' ts') = eqTerm s1 s2 (t,t') && all (eqTerm s1 s2) (zip ts ts')
-eqTerm s1 s2 (Case t bs,Case t' bs') | match bs bs' = eqTerm s1 s2 (t,t') && all (\((_,_,t),(_,_,t')) -> eqTerm s1 s2 (t,t')) (zip bs bs')
-eqTerm s1 s2 (Let x t u,Let x' t' u') = eqTerm s1 s2 (t,t') && eqTerm s1 s2 (u,u')
-eqTerm s1 s2 (Letrec f xs t u,Letrec f' xs' t' u') = eqTerm (zip xs (args (instantiate s1 u))) (zip xs' (args (instantiate s2 u'))) (foldr concrete t xs,foldr concrete t' xs')
-eqTerm s1 s2 (t,t') = False
+eqTerm (Free x,Free x') = x==x'
+eqTerm (Bound i,Bound i') = i==i'
+eqTerm (Lambda x t,Lambda x' t') = eqTerm (t,t')
+eqTerm (Con c ts,Con c' ts') | c==c' = all eqTerm (zip ts ts')
+eqTerm (Apply t u,Apply t' u') = eqTerm (t,t') && eqTerm (u,u')
+eqTerm (Fun f,Fun f') = f==f'
+eqTerm (Case t bs,Case t' bs') | matchCase bs bs' = eqTerm (t,t') && all (\((_,_,t),(_,_,t')) -> eqTerm (t,t')) (zip bs bs')
+eqTerm (Let x t u,Let x' t' u') = eqTerm (t,t') && eqTerm (u,u')
+eqTerm (Unfold t u,Unfold t' u') = eqTerm (t,t') && eqTerm (u,u')
+eqTerm (Fold t u,Fold t' u') = eqTerm (t,t') && eqTerm (u,u')
+eqTerm (t,t') = False
 
 -- context surrounding redex
 
 data Context = EmptyCtx
-             | ApplyCtx Context [Term]
-             | CaseCtx Context [(String,[String],Term)]
+             | ApplyCtx Context Term
+             | CaseCtx Context [(String,[String],Term)] deriving Show
 
 -- place term in context
 
 place t EmptyCtx = t
-place t (ApplyCtx k ts) = place (Apply t ts) k
-place t (CaseCtx k bs) = place (Case t bs) k
+place t (ApplyCtx con u) = place (Apply t u) con
+place t (CaseCtx con bs) = place (Case t bs) con
 
-match bs bs' = length bs == length bs' && all (\((c,xs,t),(c',xs',t')) -> c == c' && length xs == length xs') (zip bs bs')
+redex (Apply t u) = redex t
+redex (Case t bs) = redex t
+redex t = t
 
--- checking for renaming
+matchRedex (Fun f) (Fun f') = f==f'
+matchRedex (Unfold t u) (Unfold t' u') = True
+matchRedex t u = False
 
-renaming t u = renaming' [] [] t u []
+matchCase bs bs' = length bs == length bs' && all (\((c,xs,t),(c',xs',t')) -> c == c' && length xs == length xs') (zip bs bs')
 
-renaming' s1 s2 (Free x) t r | x `elem` fst(unzip s1) = renaming' [] [] (instantiate s1 (Free x)) (instantiate s2 t) r
-renaming' s1 s2 (Free x) (Free x') r = if x `elem` fst (unzip r)
-                                       then if (x,x') `elem` r then Just r else Nothing
-                                       else Just ((x,x'):r)
-renaming' s1 s2 (Bound i) (Bound i') r | i==i' = Just r
-renaming' s1 s2 (Lambda _ t) (Lambda _ t') r = renaming' s1 s2 t t' r
-renaming' s1 s2 (Con c ts) (Con c' ts') r | c==c' = foldrM (\(t,t') r -> renaming' s1 s2 t t' r) r (zip ts ts')
-renaming' s1 s2 (Fun f) (Fun f') s | f==f' = Just s
-renaming' s1 s2 (Apply (Bound i) ts) (Apply (Bound i') ts') r | i==i' = Just r
-renaming' s1 s2 (Apply t ts) (Apply t' ts') r = renaming' s1 s2 t t' r >>= (\r -> foldrM (\(t,t') r -> renaming' s1 s2 t t' r) r (zip ts ts'))
-renaming' s1 s2 (Case t bs) (Case t' bs') r | match bs bs' = renaming' s1 s2 t t' r >>= (\r -> foldrM (\((_,_,t),(_,_,t')) r -> renaming' s1 s2 t t' r) r (zip bs bs'))
-renaming' s1 s2 (Let x t u) (Let x' t' u') r = renaming' s1 s2 t t' r >>= renaming' s1 s2 u u'
-renaming' s1 s2 (Letrec f xs t u) (Letrec f' xs' t' u') r = renaming' (zip xs (args (instantiate s1 u))) (zip xs' (args (instantiate s2 u'))) (foldr concrete t xs) (foldr concrete t' xs') r
-renaming' s1 s2 t t' r = Nothing
+-- term instance
 
--- checking for instance
+inst t t' = inst' t t' (free t++free t') [] []
 
-inst t u = inst' [] [] t u []
+inst' (Free x) t fv bv s | x `elem` bv = [s | t==Free x]
+inst' (Free x) t fv bv s = if   x `elem` map fst s
+                           then [s | (x,t) `elem` s]
+                           else [(x,t):s]
+inst' (Bound i) (Bound i') fv bv s | i==i' = [s]
+inst' (Lambda x t) (Lambda x' t') fv bv s = let x'' = renameVar (fv++bv) x
+                                            in  inst' (concrete x'' t) (concrete x'' t') fv (x'':bv) s
+inst' (Con c ts) (Con c' ts') fv bv s | c==c' = foldr (\(t,t') ss -> concat [inst' t t' fv bv s | s <- ss]) [s] (zip ts ts')
+inst' (Apply t (Free x)) u fv bv s | x `elem` bv = inst' t (Lambda x (abstract u x)) fv bv s
+inst' (Apply t u) (Apply t' u') fv bv s = concat [inst' u u' fv bv s' | s' <- inst' t t' fv bv s]
+inst' (Fun f) (Fun f') fv bv s | f==f' = [s]
+inst' (Case t bs) (Case t' bs') fv bv s | matchCase bs bs' = foldr (\((c,xs,t),(c',xs',t')) ss -> let fv' = renameVars (fv++bv) xs
+                                                                                                      xs'' = take (length xs) fv'
+                                                                                                  in  concat [inst' (foldr concrete t xs'') (foldr concrete t' xs'') fv (xs''++bv) s | s <- ss]) (inst' t t' fv bv s) (zip bs bs')
+inst' (Let x t u) (Let x' t' u') fv bv s = let x'' = renameVar (fv++bv) x
+                                           in concat [inst' (concrete x'' u) (concrete x'' u') fv (x'':bv) s' | s' <- inst' t t' fv bv s]
+inst' (Unfold t u) (Unfold t' u') fv bv s = inst'  u u' fv bv s
+inst' (Fold t u) (Fold t' u') fv bv s | t==t' = [s] 
+inst' t t' fv bv s = []
 
-inst' s1 s2 (Free x) t s | x `elem` fst(unzip s1) = inst' [] [] (instantiate s1 (Free x)) (instantiate s2 t) s
-inst' s1 s2 (Free x) t s = if x `elem` fst (unzip s)
-                           then if (x,t) `elem` s then Just s else Nothing
-                           else Just ((x,t):s)
-inst' s1 s2 (Bound i) (Bound i') s | i==i' = Just s
-inst' s1 s2 (Lambda x t) (Lambda x' t') s = inst' s1 s2 t t' s
-inst' s1 s2 (Con c ts) (Con c' ts') s | c==c' = foldrM (\(t,t') s -> inst' s1 s2 t t' s) s (zip ts ts')
-inst' s1 s2 (Fun f) (Fun f') s | f==f' = Just s
-inst' s1 s2 (Apply (Bound i) ts) (Apply (Bound i') ts') s | i==i' = Just s
-inst' s1 s2 (Apply t ts) (Apply t' ts') s = inst' s1 s2 t t' s >>= (\s -> foldrM (\(t,t') s -> inst' s1 s2 t t' s) s (zip ts ts'))
-inst' s1 s2 (Case t bs) (Case t' bs') s | match bs bs' = inst' s1 s2 t t' s >>= (\s -> foldrM (\((_,_,t),(_,_,t')) s -> inst' s1 s2 t t' s) s (zip bs bs'))
-inst' s1 s2 (Let x t u) (Let x' t' u') s = inst' s1 s2 t t' s >>= inst' s1 s2 u u'
-inst' s1 s2 (Letrec f xs t u) (Letrec f' xs' t' u') s = inst' (zip xs (args (instantiate s1 u))) (zip xs' (args (instantiate s2 u'))) (foldr concrete t xs) (foldr concrete t' xs') s
-inst' s1 s2 t t' s = Nothing
+instTerm t t' = not (null (inst t t'))
 
--- checking for embedding for generalisation
+instLTS (t,s) (t',s') = not (null (inst (instantiate s t) (instantiate s' t')))
 
-embed t u = couple [] [] t u []
+-- homeomorphic embedding
 
-embedding s1 s2 t u r = couple s1 s2 t u r ++ dive s1 s2 t u r
+embedding t u = couple t u []
 
-couple s1 s2 (Free x) (Free x') r | x `elem` fst(unzip s1) && x' `elem` fst(unzip s2) = embedding [] [] (instantiate s1 (Free x)) (instantiate s2 (Free x')) r
-couple s1 s2 (Free x) (Free x') r = if x `elem` fst (unzip r)
-                                    then [r | (x,x') `elem` r]
-                                    else [(x,x'):r]
-couple s1 s2 (Bound i) (Bound i') r | i == i' = [r]
-couple s1 s2 (Lambda x t) (Lambda x' t') r = embedding s1 s2 t t' r
-couple s1 s2 (Con c ts) (Con c' ts') r | c==c' = foldr (\(t,t') rs -> concat [embedding s1 s2 t t' r | r <- rs]) [r] (zip ts ts')
-couple s1 s2 (Fun f) (Fun f') r | f==f' = [r]
-couple s1 s2 (Apply (Bound i) ts) (Apply (Bound i') ts') r | i==i' = [r]
-couple s1 s2 (Apply t ts) (Apply t' ts') r = foldr (\(t,t') rs -> concat [embedding s1 s2 t t' r | r <- rs]) (embedding s1 s2 t t' r) (zip ts ts')
-couple s1 s2 (Case t bs) (Case t' bs') r | match bs bs' = foldr (\((c,xs,t),(c',xs',t')) rs -> concat [embedding s1 s2 t t' r | r <- rs]) (embedding s1 s2 t t' r) (zip bs bs')
-couple s1 s2 (Let x t u) (Let x' t' u') r  = concat [embedding s1 s2 u u' r' | r' <- embedding s1 s2 t t' r]
-couple s1 s2 (Letrec f xs t u) (Letrec f' xs' t' u') r = couple (zip xs (args (instantiate s1 u))) (zip xs' (args (instantiate s2 u'))) (foldr concrete t xs) (foldr concrete t' xs') r
-couple s1 s2 t t' r = []
+embed t u r = couple t u r ++ dive t u r 
 
-dive s1 s2 t (Lambda x t') r = embedding s1 s2 t (concrete x t') r
-dive s1 s2 t (Con c ts) r = concat [embedding s1 s2 t t' r | t' <- ts]
-dive s1 s2 t (Apply t'  ts) r = embedding s1 s2 t t' r ++ concat [embedding s1 s2 t u r | u <- ts]
-dive s1 s2 t (Case t' bs) r = embedding s1 s2 t t' r ++ concatMap (\(c,xs,t') -> embedding s1 s2 t (foldr concrete t' xs) r) bs
-dive s1 s2 t (Let x t' u) r = embedding s1 s2 t t' r ++ embedding s1 s2 t (concrete x u) r
-dive s1 s2 t (Letrec f xs t' u) r = embedding s1 s2 t u r ++ embedding s1 s2 t (foldr concrete t' xs) r
-dive s1 s2 t t' r = []
+couple (Free x) (Free x') r = if x `elem` map snd r then [r | (x',x) `elem` r] else [(x',x):r]
+couple (Bound i) (Bound i') r | i == i' = [r]
+couple (Lambda x t) (Lambda x' t') r = embed t t' r
+couple (Con c ts) (Con c' ts') r | c==c' = foldr (\(t,t') rs -> concat [embed t t' r | r <- rs]) [r] (zip ts ts')
+couple (Apply t u) (Apply t' u') r = concat [embed u u' r' | r' <- embed t t' r]
+couple (Fun f) (Fun f') r | f==f' = [r]
+couple (Case t bs) (Case t' bs') r | matchCase bs bs' = foldr (\((c,xs,t),(c',xs',t')) rs -> concat [embed t t' r | r <- rs]) (embed t t' r) (zip bs bs')
+couple (Let x t u) (Let x' t' u') r = concat [embed u u' r' | r' <- embed t t' r]
+couple (Unfold t u) (Unfold t' u') r = embed  u u' r
+couple (Fold t u) (Fold t' u') r | t==t' = [r]
+couple t t' r = []
 
--- most specific generalisation of terms
+dive t (Lambda x t') r = embed t (concrete x t') r
+dive t (Con c ts) r = concat [embed t t' r | t' <- ts]
+dive t (Apply t' u) r = embed t t' r ++ embed t u r
+dive t (Case t' bs) r = embed t t' r ++ concatMap (\(c,xs,t') -> embed t (foldr concrete t' xs) r) bs
+dive t (Let x t' u) r = embed t t' r ++ embed t u r
+dive t (Unfold _ u) r = embed t (concrete "f" u) r
+dive t t' r = []
 
-generalise t u = generalise' [] [] t u (free t ++ free u) [] [] []
+embedTerm t t' = not (null (embedding t t')) && matchRedex (redex t) (redex t')
 
-generalise' s1 s2 (Free x) t fv bv g1 g2 | x `elem` fst(unzip s1) = let (t',g1',g2') = generalise' [] [] (instantiate s1 (Free x)) (instantiate s2 t) fv bv g1 g2
-                                                                    in  case t' of
-                                                                           Free x' -> (Free x,(x,fromJust (lookup x' g1')):g1,(x,fromJust (lookup x' g2')):g2)
-                                                                           _ -> (t',g1',g2')
-generalise' s1 s2 (Free x) (Free x') fv bv g1 g2 | x==x' = (Free x,g1,g2)
-generalise' s1 s2 (Bound i) (Bound i') fv bv g1 g2 | i==i' = (Bound i,g1,g2)
-generalise' s1 s2 (Lambda x t) (Lambda x' t') fv bv g1 g2 = let x'' = rename (fv++fst(unzip (s2++g2))) x
-                                                                (t'',g1',g2') = generalise' s1 s2 (concrete x'' t) (concrete x'' t') (x'':fv) (x'':bv) g1 g2
-                                                            in  (Lambda x (abstract t'' x''),g1',g2')
-generalise' s1 s2 (Con c ts) (Con c' ts') fv bv g1 g2 | c==c' = let ((g1',g2'),ts'') = mapAccumL (\(g1,g2) (t,t') -> let (t'',g1',g2') = generalise' s1 s2 t t' fv bv g1 g2
-                                                                                                                     in  ((g1',g2'),t'')) (g1,g2) (zip ts ts')
-                                                                in  (Con c ts'',g1',g2')
-generalise' s1 s2 (Fun f) (Fun f') fv bv g1 g2 | f==f' = (Fun f,g1,g2)
-generalise' s1 s2 (Apply (Free x) ts) (Apply (Free x') ts') fv bv g1 g2 | x `elem` bv && x==x' = (Apply (Free x) ts,g1,g2)
-generalise' s1 s2 (Apply t ts) (Apply t' ts') fv bv g1 g2 | not (null (embed t t')) = let (t'',g1',g2') = generalise' s1 s2 t t' fv bv g1 g2
-                                                                                          ((g1'',g2''),ts'') = mapAccumL (\(g1,g2) (t,t') -> let (t'',g1',g2') = generalise' s1 s2 t t' fv bv g1 g2
-                                                                                                                                             in  ((g1',g2'),t'')) (g1',g2') (zip ts ts')
-                                                                                      in  (Apply t'' ts'',g1'',g2'')
-generalise' s1 s2 (Case t bs) (Case t' bs') fv bv g1 g2 | match bs bs' = let (t'',g1',g2') = generalise' s1 s2 t t' fv bv g1 g2
-                                                                             ((g1'',g2''),bs'') = mapAccumL (\(g1,g2) ((c,xs,t),(c',xs',t')) -> let fv' = foldr (\x fv -> let x' = rename (fv++fst(unzip (s2++g2))) x in x':fv) fv xs
-                                                                                                                                                    xs'' = take (length xs) fv'
-                                                                                                                                                    (t'',g1',g2') = generalise' s1 s2 (foldr concrete t xs'') (foldr concrete t' xs'') fv' (xs''++bv) g1 g2
-                                                                                                                                                in ((g1',g2'),(c,xs,foldl abstract t'' xs''))) (g1',g2') (zip bs bs')
-                                                                         in  (Case t'' bs'',g1'',g2'')
-generalise' s1 s2 (Let x t u) (Let x' t' u') fv bv g1 g2 = let x'' = rename (fv++fst(unzip (s2++g2))) x
-                                                               (t'',g1',g2') = generalise' s1 s2 t t' fv bv g1 g2
-                                                               (u'',g1'',g2'') = generalise' s1 s2 (concrete x'' u) (concrete x'' u') fv bv g1' g2'
-                                                            in  (Let x t'' (abstract u'' x''),g1'',g2'')
-generalise' s1 s2 (Letrec f xs t u) (Letrec f' xs' t' u') fv bv g1 g2 | not (null rs) = let xs1 = [renameVar (head rs) x | x <- xs]
-                                                                                            (t'',g1',g2') = generalise' (zip xs1 (args (instantiate s1 u))) (zip xs2 (args (instantiate s2 u'))) (foldr concrete t (x:xs1)) (foldr concrete t' (x:xs2)) (x:xs1++fv) (x:xs1++bv) g1 g2
-                                                                                        in (Letrec f xs1 (foldl abstract t'' (x:xs1)) (Apply (Bound 0) (map Free xs1)),g1',g2')
-   where x:fv' = foldr (\x fv -> let x' = rename (fv++fst(unzip (s2++g2))) x in x':fv) fv (f:xs')
-         xs2 = take (length xs') fv'
-         rs = embed (foldr concrete t xs) (foldr concrete t' xs2)
-generalise' s1 s2 t u fv bv g1 g2 = let xs = intersect (free t) bv
-                                        t' = instantiate s1 (foldl (\t x -> Lambda x (abstract t x)) t xs)
-                                        u' = instantiate s2 (foldl (\t x -> Lambda x (abstract t x)) u xs)
-                                    in  case find (\(x,t) -> t==t' && (lookup x g2 == Just u')) g1 of
-                                           Just (x,t) -> (makeApplication (Free x) (map Free xs),g1,g2)
-                                           Nothing -> let x = rename (fv++fst(unzip (s2++g2))) "x"
-                                                      in  (makeApplication (Free x) (map Free xs),(x,t'):g1,(x,u'):g2)
+embedLTS (t,s) (t',s') = not (null (embedding t t')) && matchRedex (redex (instantiate s t)) (redex (instantiate s' t'))
+
+-- generalisation
+
+generalise t u = generalise' t u (free t++free u) [] [] []
+
+generalise' (Free x) (Free x') fv bv s1 s2 | x==x' = (Free x,s1,s2)
+generalise' (Free x) t fv bv s1 s2 | x `elem` bv = (Free x,(x,Free x):s1,(x,t):s2)
+generalise' (Bound i) (Bound i') fv bv s1 s2 | i==i' = (Bound i,s1,s2)
+generalise' (Lambda x t) (Lambda x' t') fv bv s1 s2 = let x'' = renameVar (fv++map fst s1) x
+                                                          (t'',s1',s2') = generalise' (concrete x'' t) (concrete x'' t') (x'':fv) (x'':bv) s1 s2
+                                                      in  (Lambda x (abstract t'' x''),s1',s2')
+generalise' (Con c ts) (Con c' ts') fv bv s1 s2 | c==c' = let ((s1',s2'),ts'') = mapAccumL (\(s1,s2) (t,t') -> let (t'',s1',s2') = generalise' t t' fv bv s1 s2
+                                                                                                               in  ((s1',s2'),t'')) (s1,s2) (zip ts ts')
+                                                          in  (Con c ts'',s1',s2')
+generalise' (Apply t u) (Apply t' u') fv bv s1 s2 = let (t'',s1',s2') = generalise' t t' fv bv s1 s2
+                                                        (u'',s1'',s2'') = generalise' u u' fv bv s1' s2'         
+                                                    in  (Apply t'' u'',s1'',s2'')
+generalise' (Fun f) (Fun f') fv bv s1 s2 | f==f' = (Fun f,s1,s2)
+generalise' (Case t bs) (Case t' bs') fv bv s1 s2 | matchCase bs bs' = let (t'',s1',s2') = generalise' t t' fv bv s1 s2
+                                                                           ((s1'',s2''),bs'') = mapAccumL (\(s1,s2) ((c,xs,t),(c',xs',t')) -> let fv' = renameVars (fv++map fst s1) xs
+                                                                                                                                                  xs' = take (length xs) fv'
+                                                                                                                                                  (t'',s1',s2') = generalise' t t' (xs'++fv) (xs'++bv) s1 s2
+                                                                                                                                              in ((s1',s2'),(c,xs,t''))) (s1',s2') (zip bs bs')
+                                                                       in  (Case t'' bs'',s1'',s2'')
+generalise' (Let x t u) (Let x' t' u') fv bv s1 s2 = let x'' = renameVar (fv++map fst s1) x
+                                                         (t'',s1',s2') = generalise' t t' fv bv s1 s2
+                                                         (u'',s1'',s2'') = generalise' (concrete x'' u) (concrete x'' u') (x'':fv) (x'':bv) s1' s2'
+                                                     in  (Let x t'' (abstract u'' x''),s1'',s2'')
+generalise' (Unfold t u) (Unfold t' u') fv bv s1 s2 = let xs = free t
+                                                          (u'',s1',s2') = generalise' u u' (xs++fv) (xs++bv) s1 s2
+                                                      in  (Unfold t u'',s1',s2')
+generalise' (Fold t u) (Fold t' u') fv bv s1 s2 | t==t' = (Fold t u,s1,s2)
+generalise' t u fv bv s1 s2 = let xs = intersect bv (free t)
+                                  t' = foldl (\t x -> Lambda x (abstract t x)) t xs    
+                                  u' = foldl (\t x -> Lambda x (abstract t x)) u xs 
+                              in  case find (\(x,t) -> t==t' && (lookup x s2 == Just u')) s1 of
+                                     Just (x,t) -> (foldr (\x t -> Apply t (Free x)) (Free x) xs,s1,s2)
+                                     Nothing -> let x = renameVar (fv++map fst s1) "x"
+                                                in  (foldr (\x t -> Apply t (Free x)) (Free x) xs,(x,t'):s1,(x,u'):s2)
+
+-- Program residualisation
+
+residualise (t,d) = residualise' t (free t) [] d
+
+residualise' (Free x) fv m d = (Free x,d)
+residualise' (Bound i) fv m d = (Bound i,d)
+residualise' (Lambda x t) fv m d = let x' = renameVar fv x
+                                       (t',d') = residualise' (concrete x' t) (x':fv) m d
+                                   in  (Lambda x (abstract t' x'),d')
+residualise' (Con c ts) fv m d = let (d',ts') = mapAccumL (\d t -> let (t',d') = residualise' t fv m d
+                                                                   in  (d',t')) d ts
+                                 in  (Con c ts',d')
+residualise' (Apply t u) fv m d = let (t',d') = residualise' t fv m d
+                                      (u',d'') = residualise' u fv m d'
+                                  in  (Apply t' u',d'')
+residualise' (Fun f) fv m d = (Fun f,d)
+residualise' (Case t bs) fv m d = let (t',d') = residualise' t fv m d
+                                      (d'',bs') = mapAccumL (\d (c,xs,t) -> let fv' = renameVars fv xs
+                                                                                xs' = take (length xs) fv'
+                                                                                (t',d') = residualise' (foldr concrete t xs') fv' m d
+                                                                            in  (d',(c,xs,foldl abstract t' xs'))) d' bs
+                                  in  (Case t' bs',d'')
+residualise' (Let x t u) fv m d = let x' = renameVar fv x
+                                      (t',d') = residualise' t fv m d
+                                      (u',d'') = residualise' (concrete x' u) (x':fv) m d'
+                                  in  (Let x t' (abstract u' x'),d'')
+residualise' (Unfold t u) fv m d = let f = renameVar (map fst d ++ map fst m) "f"
+                                       xs = free u
+                                       (t',d') = residualise' (concrete f u) fv ((f,(xs,t)):m) d
+                                   in  (foldl (\t x -> Apply t (Free x)) (Fun f) xs,(f,(xs,foldl abstract t' xs)):d')
+residualise' (Fold (Free f) t) fv m d = case lookup f m of
+                                           Just (xs,t') -> let s = head (inst t' t)
+                                                               (d',s') = mapAccumL (\d (x,t) -> let (t',d') = residualise' t fv m d
+                                                                                                in  (d',(x,t'))) d s
+                                                           in  (instantiate s' (foldl (\t x -> Apply t (Free x)) (Fun f) xs),d')
+                                           Nothing -> residualise' t fv m d                                                            
 
 makeLet s t = foldl (\u (x,t) -> Let x t (abstract u x)) t s
 
-makeApplication t [] = t
-makeApplication t ts = Apply t ts
-
-eval t (ApplyCtx k []) d r a = eval t k d r a
 eval (Free x) k d r a = error ("Unbound identifier: "++x)
 eval (Lambda x t) EmptyCtx d r a = (Lambda x t,r,a)
-eval (Lambda x t) (ApplyCtx k (t':ts)) d r a = eval (subst t' t) (ApplyCtx k ts) d (r+1) a
+eval (Lambda x t) (ApplyCtx k u) d r a = eval (subst u t) k d (r+1) a
 eval (Lambda x t) (CaseCtx k bs) d r a = error ("Unapplied function in case selector: " ++ show (Lambda x t))
 eval (Con c ts) EmptyCtx d r a = let ((r',a'),ts') = mapAccumL (\(r,a) t -> let (t',r',a') = eval t EmptyCtx d r a
                                                                             in  ((r',a'),t')) (r,a) ts
-                                 in  (Con c ts',r'+1,a'+1)
-eval (Con c ts) (ApplyCtx k ts') d r a = error ("Constructor application is not saturated: "++show (place (Con c ts) (ApplyCtx k ts')))
+                                 in  (Con c ts',r'+1,a')
+eval (Con c ts) (ApplyCtx k u) d r a = error ("Constructor application is not saturated: "++show (place (Con c ts) (ApplyCtx k u)))
 eval (Con c ts) (CaseCtx k bs) d r a = case find (\(c',xs,t) -> c==c' && length xs == length ts) bs of
                                           Nothing -> error ("No matching pattern in case for term:\n\n"++show (Case (Con c ts) bs))
-                                          Just (c',xs,t) -> eval (foldr subst t ts) k d (r+length ts) a
+                                          Just (c',xs,t) -> eval (foldr subst t ts) k d (r+length ts) (a+1)
+eval (Apply t u) k d r a = eval t (ApplyCtx k u) d r a
 eval (Fun f) k d r a = case lookup f d of
-                          Nothing -> error ("Undefined function: " ++ f)
-                          Just (xs,t) -> eval (foldr (\x t->Lambda x (abstract t x)) t xs) k d (r+1) a
-eval (Apply t ts) k d r a = eval t (ApplyCtx k ts) d r a
+                          Nothing -> error ("Undefined function: "++f)
+                          Just (xs,t)  -> eval (foldr Lambda t xs) k d (r+1) a
 eval (Case t bs) k d r a = eval t (CaseCtx k bs) d r a
 eval (Let x t u) k d r a = eval (subst t u) k d (r+1) a
-eval (Letrec f xs t u) k d r a = let f' = rename (fst (unzip d)) f
-                                     t' = concreteFun f' (foldr concrete t xs)
-                                     u' = concreteFun f' u
-                                 in  eval u' k ((f',(xs,t')):d) (r+1) a
 
 -- free variables in a term
 
-free t = free' t []
+free t = nub (free' t)
 
-free' (Free x) xs = if x `elem` xs then xs else x:xs
-free' (Bound i) xs = xs
-free' (Lambda x t) xs = free' t xs
-free' (Con c ts) xs = foldr free' xs ts
-free' (Fun f) xs = xs
-free' (Apply t ts) xs = foldr free' (free' t xs) ts
-free' (Case t bs) xs = foldr (\(_,_,t) xs -> free' t xs) (free' t xs) bs
-free' (Let x t u) xs = free' t (free' u xs)
-free' (Letrec f xs' t u) xs = free' t (free' u xs)
+free' (Free x) = [x]
+free' (Bound i) = []
+free' (Lambda x t) = free' t
+free' (Con c ts) = concatMap free' ts
+free' (Apply t u)  = free' t ++ free' u
+free' (Fun f) = []
+free' (Case t bs) = free' t ++ concatMap (\(c,xs,t) -> free' t) bs
+free' (Let x t u) = free' t  ++ free' u
+free' (Unfold t u) = free' u
+free' (Fold t u) = free' t ++ free' u
 
--- functions in a program
+-- funs in a prog
 
-funs = funs' []
+funs (t,d) = funs' d t []
 
-funs' fs (Free x) = fs
-funs' fs (Bound i) = fs
-funs' fs (Lambda x t) = funs' fs t
-funs' fs (Con c ts) = foldl funs' fs ts
-funs' fs (Apply t ts) = foldl funs' (funs' fs t) ts
-funs' fs (Fun f) = if f `elem` fs then fs else (f:fs)
-funs' fs (Case t bs) = foldl (\fs (c,xs,t) -> funs' fs t) (funs' fs t) bs
-funs' fs (Let x t u) = funs' (funs' fs t) u
-funs' fs (Letrec f xs t u) = funs' (funs' fs t) u
+funs' d (Free x) fs = fs
+funs' d (Bound i) fs = fs
+funs' d (Lambda x t) fs = funs' d t fs
+funs' d (Con c ts) fs = foldr (funs' d) fs ts
+funs' d (Apply t u) fs = funs' d t (funs' d u fs)
+funs' d (Fun f) fs = if   f `elem` fs
+                     then fs
+                     else case lookup f d of
+                             Nothing -> f:fs
+                             Just (xs,t)  -> funs' d t (f:fs)
+funs' d (Case t bs) fs = foldr (\(_,_,t) fs -> funs' d t fs) (funs' d t fs) bs
+funs' d (Let x t u) fs = funs' d t (funs' d u fs)
 
 -- shift global de Bruijn indices by i, where current depth is d
 
@@ -242,11 +270,12 @@ shift' d i (Free x) = Free x
 shift' d i (Bound i') = if i' >= d then Bound (i'+i) else Bound i'
 shift' d i (Lambda x t) = Lambda x (shift' (d+1) i t)
 shift' d i (Con c ts) = Con c (map (shift' d i) ts)
+shift' d i (Apply t u) = Apply (shift' d i t) (shift' d i u)
 shift' d i (Fun f) = Fun f
-shift' d i (Apply t ts) = Apply (shift' d i t) (map (shift' d i) ts)
 shift' d i (Case t bs) = Case (shift' d i t) (map (\(c,xs,t) -> (c,xs,shift' (d+length xs) i t)) bs)
 shift' d i (Let x t u) = Let x (shift' d i t) (shift' (d+1) i u)
-shift' d i (Letrec f xs t u) = Letrec f xs (shift' (d+1+length xs) i t) (shift' (d+1) i u)
+shift' d i (Unfold t u) = Unfold (shift' d i t) (shift' (d+1) i u)
+shift' d i (Fold t u) = Fold (shift' d i t) (shift' d i u)
 
 -- substitute term t for variable with de Bruijn index i
 
@@ -259,11 +288,27 @@ subst' i t (Bound i')
    | otherwise = Bound (i'-1)
 subst' i t (Lambda x t') = Lambda x (subst' (i+1) t t')
 subst' i t (Con c ts) = Con c (map (subst' i t) ts)
+subst' i t (Apply t' u) = Apply (subst' i t t') (subst' i t u)
 subst' i t (Fun f) = Fun f
-subst' i t (Apply t' ts) = Apply (subst' i t t') (map (subst' i t) ts)
 subst' i t (Case t' bs) = Case (subst' i t t') (map (\(c,xs,u) -> (c,xs,subst' (i+length xs) t u)) bs)
 subst' i t (Let x t' u) = Let x (subst' i t t') (subst' (i+1) t u)
-subst' i t (Letrec f xs t' u) = Letrec f xs (subst' (i+1+length xs) t t') (subst' (i+1) t u)
+subst' i t (Unfold t' u) = Unfold (subst' i t t') (subst' (i+1) t u)
+subst' i t (Fold t' u) = Fold (subst' i t t') (subst' i t u)
+
+-- rename a term t using renaming r
+
+rename r (Free x) = case lookup x r of
+                       Just x'  -> Free x'
+                       Nothing -> Free x
+rename r (Bound i) = Bound i
+rename r (Lambda x t) = Lambda x (rename r t)
+rename r (Con c ts) = Con c (map (rename r) ts)
+rename r (Apply t u) = Apply (rename r t) (rename r u)
+rename r (Fun f) = Fun f
+rename r (Case t bs) = Case (rename r t) (map (\(c,xs,t) -> (c,xs,rename r t)) bs)
+rename r (Let x t u) = Let x (rename r t) (rename r u)
+rename r (Unfold t u) = Unfold (rename r t) (rename r u)
+rename r (Fold t u) = Fold (rename r t) (rename r u)
 
 -- instantiate a term t using substitution s
 
@@ -275,11 +320,12 @@ instantiate' d s (Free x) = case lookup x s of
 instantiate' d s (Bound i) = Bound i
 instantiate' d s (Lambda x t) = Lambda x (instantiate' (d+1) s t)
 instantiate' d s (Con c ts) = Con c (map (instantiate' d s) ts)
+instantiate' d s (Apply t u) = Apply (instantiate' d s t) (instantiate' d s u)
 instantiate' d s (Fun f) = Fun f
-instantiate' d s (Apply t ts) = Apply (instantiate' d s t) (map (instantiate' d s) ts)
 instantiate' d s (Case t bs) = Case (instantiate' d s t) (map (\(c,xs,t) -> (c,xs,instantiate' (d+length xs) s t)) bs)
 instantiate' d s (Let x t u) = Let x (instantiate' d s t) (instantiate' (d+1) s u)
-instantiate' d s (Letrec f xs t u) = Letrec f xs (instantiate' (d+1+length xs) s t) (instantiate' (d+1) s u)
+instantiate' d s (Unfold t u) = Unfold (instantiate' d s t) (instantiate' (d+1) s u)
+instantiate' d s (Fold t u) = Fold (instantiate' d s t) (instantiate' d s u)
 
 -- replace variable x with de Bruijn index
 
@@ -289,11 +335,12 @@ abstract' i (Free x') x = if x==x' then Bound i else Free x'
 abstract' i (Bound i') x = if i'>=i then Bound (i'+1) else Bound i'
 abstract' i (Lambda x' t) x = Lambda x' (abstract' (i+1) t x)
 abstract' i (Con c ts) x = Con c (map (\t -> abstract' i t x) ts)
+abstract' i (Apply t u) x = Apply (abstract' i t x) (abstract' i u x)
 abstract' i (Fun f) x = Fun f
-abstract' i (Apply t ts) x = Apply (abstract' i t x) (map (\t -> abstract' i t x) ts)
 abstract' i (Case t bs) x = Case (abstract' i t x) (map (\(c,xs,t) -> (c,xs,abstract' (i+length xs) t x)) bs)
 abstract' i (Let x' t u) x = Let x' (abstract' i t x) (abstract' (i+1) u x)
-abstract' i (Letrec f xs t u) x = Letrec f xs (abstract' (i+1+length xs) t x) (abstract' (i+1) u x)
+abstract' i (Unfold t u) x = Unfold (abstract' i t x) (abstract' (i+1) u x)
+abstract' i (Fold t u) x = Fold (abstract' i t x) (abstract' i u x)
 
 -- replace de Bruijn index 0 with variable x
 
@@ -306,92 +353,38 @@ concrete' i x (Bound i')
    | otherwise = Bound (i'-1)
 concrete' i x (Lambda x' t) = Lambda x' (concrete' (i+1) x t)
 concrete' i x (Con c ts) = Con c (map (concrete' i x) ts)
+concrete' i x (Apply t u) = Apply (concrete' i x t) (concrete' i x u)
 concrete' i x (Fun f) = Fun f
-concrete' i x (Apply t ts) = Apply (concrete' i x t) (map (concrete' i x) ts)
 concrete' i x (Case t bs) = Case (concrete' i x t) (map (\(c,xs,t) -> (c,xs,concrete' (i+length xs) x t)) bs)
 concrete' i x (Let x' t u) = Let x' (concrete' i x t) (concrete' (i+1) x u)
-concrete' i x (Letrec f xs t u) = Letrec f xs (concrete' (i+1+length xs) x t) (concrete' (i+1) x u)
+concrete' i x (Unfold t u) = Unfold (concrete' i x t) (concrete' (i+1) x u)
+concrete' i x (Fold t u) = Fold (concrete' i x t) (concrete' i x u)
 
--- replace function f with de Bruijn index
+-- rename variable x so it does not clash with any of fv
 
-abstractFun = abstractFun' 0
+renameVar fv x = if   x `elem` fv
+                 then renameVar fv (x++"'")
+                 else x
 
-abstractFun' i (Free x) f = Free x
-abstractFun' i (Bound i') f = if i'>=i then Bound (i'+1) else Bound i'
-abstractFun' i (Lambda x t) f = Lambda x (abstractFun' (i+1) t f)
-abstractFun' i (Con c ts) f = Con c (map (\t -> abstractFun' i t f) ts)
-abstractFun' i (Fun f') f = if f==f' then Bound i else Fun f'
-abstractFun' i (Apply t ts) f = Apply (abstractFun' i t f) (map (\t -> abstractFun' i t f) ts)
-abstractFun' i (Case t bs) f = Case (abstractFun' i t f) (map (\(c,xs,t) -> (c,xs,abstractFun' (i+length xs) t f)) bs)
-abstractFun' i (Let x' t u) f = Let x' (abstractFun' i t f) (abstractFun' (i+1) u f)
-abstractFun' i (Letrec f' xs t u) f = Letrec f' xs (abstractFun' (i+1+length xs) t f) (abstractFun' (i+1) u f)
-
--- replace de Bruijn index 0 with function f
-
-concreteFun = concreteFun' 0
-
-concreteFun' i f (Free x) = Free x
-concreteFun' i f (Bound i')
-   | i'<i = Bound i'
-   | i'==i = Fun f
-   | otherwise = Bound (i'-1)
-concreteFun' i f (Lambda x t) = Lambda x (concreteFun' (i+1) f t)
-concreteFun' i f (Con c ts) = Con c (map (concreteFun' i f) ts)
-concreteFun' i f (Fun f') = Fun f'
-concreteFun' i f (Apply t ts) = Apply (concreteFun' i f t) (map (concreteFun' i f) ts)
-concreteFun' i f (Case t bs) = Case (concreteFun' i f t) (map (\(c,xs,t) -> (c,xs,concreteFun' (i+length xs) f t)) bs)
-concreteFun' i f (Let x t u) = Let x (concreteFun' i f t) (concreteFun' (i+1) f u)
-concreteFun' i f (Letrec f' xs t u) = Letrec f' xs (concreteFun' (i+1+length xs) f t) (concreteFun' (i+1) f u)
-
-rename fv x = if   x `elem` fv
-              then rename fv (x++"'")
-              else x
-
--- rename a term t using renaming r
-
-renameVar r x = fromMaybe x (lookup x r)
-
-renameTerm r (Free x) = Free (renameVar r x)
-renameTerm r (Bound i) = Bound i
-renameTerm r (Lambda x t) = Lambda x (renameTerm r t)
-renameTerm r (Con c ts) = Con c (map (renameTerm r) ts)
-renameTerm r (Fun f) = Fun f
-renameTerm r (Apply t ts) = Apply (renameTerm r t) (map (renameTerm r) ts)
-renameTerm r (Case t bs) = Case (renameTerm r t) (map (\(c,xs,t) -> (c,xs,renameTerm r t)) bs)
-renameTerm r (Let x t u) = Let x (renameTerm r t) (renameTerm r u)
-renameTerm r (Letrec f xs t u) = Letrec f xs (renameTerm r t) (renameTerm r u)
-
--- redex
-
-redex (Apply t u) = redex t
-redex (Case t bs) = redex t
-redex t = t
-
-
--- function name and args
-
-fun (Apply t ts) = t
-
-args (Apply t ts) = ts
+renameVars = foldr (\x fv -> let x' = renameVar fv x in x':fv)
 
 -- unfold function
 
-unfold (Apply t ts) fs d = let (t',d') = unfold t fs d
-                           in  (Apply t' ts,d')
-unfold (Case t bs) fs d = let (t',d') = unfold t fs d
-                          in  (Case t' bs,d')
-unfold (Fun f) fs d = case lookup f d of
-                         Just (xs,t)-> (foldr (\x t->Lambda x (abstract t x)) t xs,d)
-unfold (Let x t u) fs d = unfold (subst t u) fs d
-unfold (Letrec f xs t u) fs d = let f' = rename fs f
-                                    t' = concreteFun f' (foldr concrete t xs)
-                                    u' = concreteFun f' u
-                                in unfold u' (f':fs) ((f',(xs,t')):d)
-unfold t fs d = (t,d)
+unfold (Apply t u,d) = let t' = unfold (t,d)
+                        in  Apply t' u
+unfold (Case t bs,d) = let t' = unfold (t,d)
+                       in  Case t' bs
+unfold (Fun f,d) = case lookup f d of
+                    Nothing -> error ("Undefined function: "++f)
+                    Just (xs,t) -> foldr Lambda t xs
+unfold (t,d) = t
+
+args (Apply t u) = args t ++ [u]
+args _ = []
 
 -- pretty printing
 
-stripLambda (Lambda x t) = let x' = rename (free t) x
+stripLambda (Lambda x t) = let x' = renameVar (free t) x
                                (xs,u) = stripLambda $ concrete x' t
                            in  (x':xs,u)
 stripLambda t = ([],t)
@@ -407,22 +400,18 @@ prettyTerm t@(Con c ts)
    | isList t  = text "[" <> hcat (punctuate comma $ map prettyTerm $ con2list t) <> text "]"
    | null ts   = text c
    | otherwise = text c <> parens (hcat $ punctuate comma $ map prettyTerm ts)
+prettyTerm (Apply t u) = prettyTerm t <+> prettyAtom u
 prettyTerm (Fun f) = text f
-prettyTerm (Apply t ts ) = prettyAtom t <+> hsep (map prettyAtom ts)
 prettyTerm (Case t (b:bs)) = hang (text "case" <+> prettyAtom t <+> text "of") 1 (blank <+> prettyBranch b $$ vcat (map ((text "|" <+>).prettyBranch) bs)) where
    prettyBranch (c,[],t) = text c <+> text "->" <+> prettyTerm t
-   prettyBranch (c,xs,t) = let fv = foldr (\x fv -> let x' = rename fv x in x':fv) (free t) xs
+   prettyBranch (c,xs,t) = let fv = renameVars (free t) xs
                                xs' = take (length xs) fv
                                t' = foldr concrete t xs'
                            in  text c <> parens(hcat $ punctuate comma $ map text xs') <+> text "->" <+> prettyTerm t' $$ empty
-prettyTerm (Let x t u) = let x' = rename (free u) x
+prettyTerm (Let x t u) = let x' = renameVar (free u) x
                          in  (text "let" <+> text x' <+> text "=" <+> prettyTerm t) $$ (text "in" <+> prettyTerm (concrete x' u))
-prettyTerm (Letrec f xs t u) = let fv = foldr (\x fv -> let x' = rename fv x in x':fv) (free t) xs
-                                   f' = rename fv f
-                                   xs' = take (length xs) fv
-                                   t' = foldr concrete t (f':xs')
-                                   u' = concrete f' u
-                               in  (text "letrec" <+> text f' <+> hsep (map text xs') <+> text "=" <+> prettyTerm t') $$ (text "in" <+> prettyTerm u')
+prettyTerm (Unfold t u) = text "Unfold" <+> prettyAtom t <+> text "=" <+> prettyTerm u
+prettyTerm (Fold t u) = text "Fold" <+> prettyAtom t <+> prettyAtom u
 
 prettyAtom (Free x) = text x
 prettyAtom t@(Con c ts)
@@ -433,11 +422,12 @@ prettyAtom t@(Con c ts)
 prettyAtom (Fun f) = text f
 prettyAtom t = parens $ prettyTerm t
 
-prettyProg (t,d) = prettyProg' (("main",([],t)):d)
+prettyProg (t,d) = let d' = [f | f <- d, fst f `elem` funs (t,d)]          
+                   in  prettyEnv (("main",([],t)):d')
 
-prettyProg' [] = empty
-prettyProg' [(f,(xs,t))] = text f <+> hsep (map text xs) <+> equals <+> prettyTerm t
-prettyProg' ((f,(xs,t)):fs) = text f <+> hsep (map text xs) <+> equals <+> prettyTerm t <> semi $$ prettyProg' fs
+prettyEnv [] = empty
+prettyEnv [(f,(xs,t))] = text f <+> hsep (map text xs) <+> equals <+> prettyTerm (foldr concrete t xs)
+prettyEnv ((f,(xs,t)):fs) = text f <+> hsep (map text xs) <+> equals <+> prettyTerm (foldr concrete t xs) <> semi $$ prettyEnv fs
 
 isList (Con "Nil" []) = True
 isList (Con "Cons" [h,t]) = isList t
@@ -448,6 +438,10 @@ list2con (h:t) = Con "Cons" [h,list2con t]
 
 con2list (Con "Nil" [])  = []
 con2list (Con "Cons" [h,t]) = h:con2list t
+
+range2con m n = if    m > n 
+                then Con "Nil" []
+                else Con "Cons" [nat2con m,range2con (m+1) n]
 
 isNat (Con "Zero" []) = True
 isNat (Con "Succ" [n]) = isNat n
@@ -467,7 +461,7 @@ potDef = emptyDef
          , commentLine     = "--"
          , nestedComments  = True
          , identStart      = lower
-         , identLetter     = letter <|> oneOf "_'"
+         , identLetter     = letter <|> digit <|> oneOf "_'"
          , reservedNames   = ["import", "case","of","let","in","letrec","ALL","EX","ANY"]
          , reservedOpNames = ["~","/\\","\\/","<=>","=>"]
          , caseSensitive   = True
@@ -484,23 +478,26 @@ reserved   = T.reserved lexer
 reservedOp = T.reservedOp lexer
 natural    = T.natural lexer
 
-makeFuns ds = let fs = fst(unzip ds)
-              in  map (\(f,(xs,t)) -> (f,(xs,makeFuns' fs t))) ds
-
-makeFuns' fs (Free x) = if x `elem` fs then Fun x else Free x
-makeFuns' fs (Bound i ) = Bound i
-makeFuns' fs (Lambda x t) = Lambda x (makeFuns' fs t)
-makeFuns' fs (Con c ts) = Con c (map (makeFuns' fs) ts)
-makeFuns' fs (Apply t ts) = Apply (makeFuns' fs t) (map (makeFuns' fs) ts)
-makeFuns' fs (Case t bs) = Case (makeFuns' fs t) (map (\(c,xs,t) -> (c,xs,makeFuns' fs t)) bs)
-makeFuns' fs (Let x t u) = Let x (makeFuns' fs t) (makeFuns' fs u)
-makeFuns' fs (Letrec f xs t u) = Letrec f xs (makeFuns' fs t) (makeFuns' fs u)
-
 con = do
       c <- upper
       cs <- many letter
       spaces
       return (c:cs)
+
+makeProg ds = let fs = map fst ds
+                  ds' =  map (\(f,(xs,t)) -> (f,(xs,foldl abstract (makeFun fs t) xs))) ds
+              in  case lookup "main" ds' of
+                     Nothing -> error "No main function"
+                     Just (xs,t) -> (t,delete ("main",(xs,t)) ds')
+
+makeFun fs (Free x) = if x `elem` fs then Fun x else Free x
+makeFun fs (Bound i) = Bound i
+makeFun fs (Lambda x t) = Lambda x (makeFun fs t)
+makeFun fs (Con c ts) = Con c (map (makeFun fs) ts)
+makeFun fs (Apply t u) = Apply (makeFun fs t) (makeFun fs u)
+makeFun fs (Fun f) = Fun f
+makeFun fs (Case t bs) = Case (makeFun fs t) (map (\(c,xs,t) -> (c,xs,makeFun fs t)) bs)
+makeFun fs (Let x t u) = Let x (makeFun fs t) (makeFun fs u)
 
 modul = do
         fs <- many imp
@@ -511,43 +508,17 @@ imp = do
       reserved "import"
       con
 
-expr =     do
-           reserved "ALL"
-           x <- identifier
-           symbol ":"
-           c <- con
-           symbol "."
-           e <- expr
-           return (Apply (Free ("all"++c)) [Lambda x (abstract e x)])
-       <|> do
-           reserved "EX"
-           x <- identifier
-           symbol ":"
-           c <- con
-           symbol "."
-           e <- expr
-           return (Apply (Free ("ex"++c)) [Lambda x (abstract e x)])
-       <|> do
-           reserved "ANY"
-           x <- identifier
-           symbol ":"
-           c <- con
-           symbol "."
-           e <- expr
-           return (Apply (Free ("any"++c)) [Apply (Free "construct") [Lambda x (abstract e x)]])
-       <|> term
-
 fundef = do
          f <- identifier
          xs <- many identifier
          symbol "="
-         e <- expr
+         e <- term
          return (f,(xs,e))
 
 term =     do
-           t <- atom
-           ts <- many atom
-           return (makeApplication t ts)
+           a <- atom
+           as <- many atom
+           return (foldl Apply a as)
        <|> do
            symbol "\\"
            xs <- many1 identifier
@@ -560,50 +531,34 @@ term =     do
            reserved "of"
            bs <- sepBy1 branch (symbol "|")
            return (Case t bs)
-       <|> do
-           reserved "let"
-           x <- identifier
-           symbol "="
-           t <- term
-           reserved "in"
-           u <- term
-           return (Let x t (abstract u x))
-       <|> do
-           reserved "letrec"
-           f <- identifier
-           xs <- many identifier
-           symbol "="
-           t <- term
-           reserved "in"
-           u <- term
-           return (Letrec f xs (abstract (foldl abstract t xs) f) (abstract u f))
+      <|> do
+          reserved "let"
+          x <- identifier
+          symbol "="
+          t <- term
+          reserved "in"
+          u <- term
+          return (Let x t (abstract u x))
 
-atom =     do
-           x <- identifier
-           return (Free x)
+atom =     do Free <$> identifier
        <|> do
            c <- con
-           ts <-     bracks (sepBy1 term comm)
-                 <|> do
-                     spaces
-                     return []
-           return (Con c ts)
-       <|> do
-           n <- natural
-           return (nat2con n)
+           ts <- option [] (bracks (sepBy1 term comm))
+           return (Con c ts) 
+       <|> do 
+           m <- natural
+           option (nat2con m) (do symbol ".." 
+                                  range2con m <$> natural)
        <|> do
            symbol "["
            ts <- sepBy term comm
            symbol "]"
            return (list2con ts)
-       <|> bracks expr
+       <|> bracks term
 
 branch = do
          c <- con
-         xs <-     bracks (sepBy1 identifier comm)
-               <|> do
-                   spaces
-                   return []
+         xs <- option [] (bracks (sepBy1 identifier comm))
          symbol "->"
          t <- term
          return (c,xs,foldl abstract t xs)
