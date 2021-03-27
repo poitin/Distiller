@@ -1,6 +1,7 @@
 module Exception where
 
 import Control.Monad (ap,liftM)
+import Debug.Trace
 
 data Exception a b = Exn a | NoExn b deriving Show
 
@@ -12,7 +13,7 @@ instance Applicative (Exception a) where
     (<*>) = ap
 
 instance Monad (Exception a) where
-    (>>=) (Exn d) f = (Exn d)
+    (>>=) (Exn d) f = Exn d
     (>>=) (NoExn a) f = f a
 
 handle :: Exception a b -> (a -> Exception a b) -> Exception a b
@@ -21,6 +22,6 @@ handle x f = case x of
                NoExn a -> NoExn a
 
 throw :: a -> Exception a b
-throw x = Exn x
+throw = Exn
 
 returnval (NoExn a) = a
