@@ -1,0 +1,62 @@
+cabal-version: 3.0
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 1d14bbcd1f769a3b8ba1ba9a72963dd7de816e39d26efe5c313c1087daac8448
+
+name:           distiller
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/poitin/distiller#readme>
+homepage:       https://github.com/poitin/distiller#readme
+bug-reports:    https://github.com/poitin/distiller/issues
+author:         Geoff Hamilton
+maintainer:     hamilton@computing.dcu.ie
+copyright:      2020 Geoff Hamilton
+license:        BSD-3-Clause
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/poitin/distiller
+
+library
+  exposed-modules:
+      Exception
+      Term
+      Trans
+  other-modules:
+      Paths_distiller
+  hs-source-dirs:
+      src
+  build-depends:
+      base >=4.7 && <5
+    , parsec
+    , pretty
+    , directory
+    , process
+  default-language: Haskell2010
+
+executable distiller
+  main-is: Main.hs
+  other-modules:
+      Exception
+      Term
+      Trans
+  hs-source-dirs:
+      src
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , parsec
+    , pretty
+    , directory
+    , process
+    , distiller
+  default-language: Haskell2010
+
