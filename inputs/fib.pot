@@ -1,0 +1,12 @@
+main = fib n;
+
+fib n = case n of
+            Zero    -> Succ(Zero)
+          | Succ(n) -> case n of
+                          Zero -> Succ(Zero)
+                        | Succ(n') -> add (fib n') (fib n);
+
+add m n = case m of
+              Zero    -> n
+            | Succ(m) -> Succ(add m n)
+

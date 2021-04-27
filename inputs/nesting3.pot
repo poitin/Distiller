@@ -1,0 +1,9 @@
+main = case n of
+          Zero -> Tuple(m,0,u,v,m,0)
+        | Succ(n') -> f' n' m n' u 0;
+f' x'' m x u x' = case x'' of
+                     Zero -> f'' m m x u x'
+                   | Succ(y') -> f' y' m x u Succ(x');
+f'' x''''''' x''' x'''' x''''' x'''''' = case x''''''' of
+                                            Zero -> Tuple(x''',Succ(x''''),x''''',x'''''',0,0)
+                                          | Succ(x') -> f'' x' x''' Succ(x'''') Succ(x''''') Succ(x'''''')

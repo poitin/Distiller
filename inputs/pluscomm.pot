@@ -1,0 +1,5 @@
+import Nat
+
+main = eqNat (plus x y) (plus y x)
+
+

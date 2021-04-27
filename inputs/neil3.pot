@@ -1,0 +1,9 @@
+import NatList
+
+main = f xs;
+
+f xs = case xs of
+           Nil        -> True
+         | Cons(x,xs) -> case (f xs) of
+                            True  -> f xs
+                          | False -> False

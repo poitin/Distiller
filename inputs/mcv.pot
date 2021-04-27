@@ -1,0 +1,25 @@
+import Nat
+
+main = mcv input;
+
+input = Prog(3,And(Ref(4),Ref(5)),Prog(5,Or(Ref(0),Ref(2)),Prog(4,And(Ref(1),Ref(2)),Prog(2,And(Ref(1),Ref(1)),Prog(1,TT,Empty)))));
+
+mcv p = case p of
+           Empty -> False
+         | Prog(v,e,p') -> eval e p';
+
+eval e p = case e of
+              TT -> True
+            | FF -> False
+            | And(e,e') -> (case (eval e p) of
+                               True -> eval e' p
+                             | False -> False)
+            | Or(e,e') -> (case (eval e p) of
+                              True -> True
+                            | False -> eval e' p)
+            | Ref(v) -> case p of
+                           Empty -> False
+                         | Prog(v',e',p') -> case (eqNat v v') of
+                                                True -> eval e' p'
+                                              | False -> eval e p'
+

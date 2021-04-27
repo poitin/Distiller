@@ -1,5 +1,3 @@
-import Construct
-
 and x y = case x of 
              True -> y     
            | False -> False;  
@@ -22,10 +20,4 @@ not x = case x of
 
 eqBool x y = case x of                   
                 True -> y            
-              | False -> not y;
-
-allBool p = and (p True) (p False);
-
-exBool p = or (p True) (p False);
-
-anyBool f = meet (f True) (f False)
+              | False -> not y

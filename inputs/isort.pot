@@ -1,0 +1,15 @@
+import NatList
+
+main = isort xs;
+
+isort xs = case xs of
+               Nil        -> Nil
+             | Cons(x,xs) -> insert x (isort xs);
+
+insert y xs = case xs of
+                  Nil        -> Cons(y,Nil)
+                | Cons(z,zs) -> case (gt z y) of
+                                   True  -> Cons(y,Cons(z,zs))
+                                 | False -> Cons(z,insert y zs)
+
+

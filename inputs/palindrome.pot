@@ -1,0 +1,20 @@
+import NatList
+
+main = palindrome xs xs;
+
+palindrome xs ys = case ys of
+                       Nil         -> True
+                     | Cons(y,ys') -> palindrome' xs ys' xs ys;
+
+palindrome' us vs xs ys = case vs of
+                              Nil    -> (case ys of
+                                            Cons(y,ys') -> (case us of
+                                                               Cons(u,us') -> (case y of
+                                                                                  Zero -> (case u of
+                                                                                              Zero -> palindrome xs ys'
+                                                                                            | One  -> False)
+                                                                                | One  -> (case u of
+                                                                                              Zero -> False
+                                                                                            | One  -> palindrome xs ys'))))
+                            | Cons(v,vs') -> case us of
+                                                 Cons(u,us') -> palindrome' us' vs' xs ys

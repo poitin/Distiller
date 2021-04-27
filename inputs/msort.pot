@@ -1,0 +1,29 @@
+import NatList
+
+main = msort xs;
+
+msort xs = case xs of
+               Nil -> Nil
+             | Cons(x',xs') -> case xs' of
+                                  Nil -> Cons(x',Nil)
+                                | Cons(x'',xs'') -> merge (msort (firsts xs)) (msort (seconds xs));  
+         
+merge xs ys = case xs of
+                  Nil        -> ys
+                | Cons(x',xs') -> case ys of
+                                     Nil -> xs
+                                   | Cons(y',ys') -> case (gt y' x') of
+                                                        True  -> Cons(x',merge xs' ys)
+                                                      | False -> Cons(y',merge xs ys');
+firsts xs = case xs of
+                Nil -> Nil
+              | Cons(x',xs') -> case xs' of
+                                   Nil -> Cons(x',Nil)
+                                 | Cons(x'',xs'') -> Cons(x',firsts xs'');
+seconds xs = case xs of
+                 Nil -> Nil
+               | Cons(x',xs') -> case xs' of
+                                    Nil -> Nil
+                                  | Cons(x'',xs'') -> Cons(x'',seconds xs'')
+
+

@@ -1,0 +1,12 @@
+import Nat
+
+main = f x x;
+
+f x y = case x of
+            Zero     -> g y
+          | Succ(x') -> f x' y;
+
+g y = case y of
+          Zero     -> Zero
+        | Succ(y') -> g y'
+

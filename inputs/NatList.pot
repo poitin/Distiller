@@ -23,10 +23,4 @@ eqNatList xs ys = case xs of
                               | Cons(y,ys) -> False)
                    | Cons(x,xs) -> case y of
                                       Nil -> False
-                                    | Cons(y,ys) -> and (eqNat x y) (eqNatList xs ys);
-
-allNatList p = and (p Nil) (allNat (\x -> allNatList (\xs -> p (Cons(x,xs)))));
-
-exNatList p = or (p Nil) (exNat (\x -> exNatList (\xs -> p (Cons(x,xs)))));
-
-anyNatList f = meet (f Nil) (anyNat (\x -> anyNatList (\xs -> f (Cons(x,xs)))))
+                                    | Cons(y,ys) -> and (eqNat x y) (eqNatList xs ys)

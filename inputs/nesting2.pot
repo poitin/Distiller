@@ -1,0 +1,11 @@
+main = case n of
+           Zero -> Tuple(m,n,u,v,m,n)
+         | Succ(n') -> f m Succ(n') u Zero m n';
+                       
+f m n u v x y = case y of
+                    Zero -> g m n u v x
+                  | Succ(y') -> f m n u Succ(v) x y';
+
+g m n u v x = case x of
+                  Zero -> Tuple(m,n,u,v,Zero,Zero)
+                | Succ(x') -> g m Succ(n) Succ(u) Succ(v) x'

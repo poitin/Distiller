@@ -1,0 +1,24 @@
+main = gcd x y;
+
+gcd x y = case x of
+             Zero -> y
+	       | Succ(x') -> case y of
+		                    Zero -> x
+						  | Succ(y') -> case (gt x y) of
+                                            True  -> gcd (minus x y) y
+                                          | False -> case (gt y x) of
+                                                        True  -> gcd x (minus y x)
+                                                      | False -> x;
+
+gt x y = case x of
+            Zero -> False
+          | Succ(x) -> case y of
+                          Zero -> True
+                        | Succ(y) -> gt x y;
+
+minus x y = case y of
+               Zero -> x
+             | Succ(y) -> case x of
+                             Zero -> Zero
+                           | Succ(x) -> minus x y
+              

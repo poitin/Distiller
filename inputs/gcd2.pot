@@ -1,0 +1,15 @@
+main = f0 x y;
+
+f0 a b = case a of
+                Zero -> b
+              | Succ(a) -> case b of
+                              Zero -> Succ(a)
+                            | Succ(b) -> f1 a b a b;
+
+f1 a b c d = case a of
+                Zero -> (case b of
+                            Zero -> Succ(c)
+                          | Succ(b) -> f1 c b c b)
+              | Succ(a) -> (case b of
+                               Zero -> f1 d a d a
+                             | Succ(b) -> f1 a b c d)
