@@ -26,8 +26,8 @@ To see the contents of this program:
 POT> :prog  
 main = append (append xs ys) zs;  
 append xs ys = case xs of  
-                                     Nil -> ys  
-                                  | Cons(x,xs) -> Cons(x,append xs ys)  
+                                     Nil -> ys  
+                                  | Cons(x,xs) -> Cons(x,append xs ys)  
 
 To see the top-level term:
 
@@ -44,8 +44,8 @@ f xs ys zs = case xs of
                                              | Cons(x,xs) -> Cons(x,f' xs zs)  
                         | Cons(x,xs) -> Cons(x,f xs ys zs);  
 f' xs' zs = case xs' of  
-                          Nil -> zs  
-                      | Cons(x,xs) -> Cons(x,f' xs zs)  
+                           Nil -> zs  
+                        | Cons(x,xs) -> Cons(x,f' xs zs)  
 
 To evaluate the current program:
 
