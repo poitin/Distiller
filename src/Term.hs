@@ -101,7 +101,7 @@ inst' t t' fv bv s = []
 
 instTerm t t' = not (null (inst t t'))
 
-instLTS (t,s) (t',s') = not (null (inst (instantiate s t) (instantiate s' t')))
+instLTS (t,s) (t',s') = instTerm (instantiate s t) (instantiate s' t')
 
 -- homeomorphic embedding
 
@@ -131,7 +131,7 @@ dive t t' r = []
 
 embedTerm t t' = not (null (embedding t t')) && matchRedex (redex t) (redex t')
 
-embedLTS (t,s) (t',s') = not (null (embedding t t')) && matchRedex (redex (instantiate s t)) (redex (instantiate s' t'))
+embedLTS (t,s) (t',s') = embedTerm (instantiate s t) (instantiate s' t')
 
 -- generalisation
 

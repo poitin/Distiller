@@ -21,6 +21,6 @@ eqNatList xs ys = case xs of
                      Nil -> (case ys of
                                 Nil -> True
                               | Cons(y,ys) -> False)
-                   | Cons(x,xs) -> case y of
+                   | Cons(x,xs) -> case ys of
                                       Nil -> False
                                     | Cons(y,ys) -> and (eqNat x y) (eqNatList xs ys)
