@@ -87,8 +87,8 @@ inst' (Bound i) (Bound i') fv bv s | i==i' = [s]
 inst' (Lambda x t) (Lambda x' t') fv bv s = let x'' = renameVar (fv++bv) x
                                             in  inst' (concrete x'' t) (concrete x'' t') fv (x'':bv) s
 inst' (Con c ts) (Con c' ts') fv bv s | c==c' = foldr (\(t,t') ss -> concat [inst' t t' fv bv s | s <- ss]) [s] (zip ts ts')
-inst' (Apply t (Free x)) u fv bv s | x `elem` bv = inst' t (Lambda x (abstract u x)) fv bv s
 inst' (Apply t u) (Apply t' u') fv bv s = concat [inst' u u' fv bv s' | s' <- inst' t t' fv bv s]
+inst' (Apply t (Free x)) u fv bv s | x `elem` bv = inst' t (Lambda x (abstract u x)) fv bv s
 inst' (Fun f) (Fun f') fv bv s | f==f' = [s]
 inst' (Case t bs) (Case t' bs') fv bv s | matchCase bs bs' = foldr (\((c,xs,t),(c',xs',t')) ss -> let fv' = renameVars (fv++bv) xs
                                                                                                       xs'' = take (length xs) fv'
