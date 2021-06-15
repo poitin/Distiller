@@ -1,6 +1,10 @@
 import Bool
 
 main = 
+
+ -- ???
+ -- mMult isZ f g m1 m2
+
  -- SLOW / DIV
  -- mMult isZ1 p1 mlt m2 (mask m3 msk)
 
@@ -139,6 +143,14 @@ mask m msk =
                     | Val (v) -> Error
                     | Node (t1, t2, t3, t4) -> (reduceTree (mask t1 q1) (mask t2 q2) (mask t3 q3) (mask t4 q4)));
 
+combine add mult q1 q2 q3 q4 t1 t2 t3 t4 =
+   (reduceTree
+        (add (mult q1 t1)(mult q2 t3)) 
+        (add (mult q1 t2)(mult q2 t4)) 
+        (add (mult q3 t1)(mult q4 t3)) 
+        (add (mult q3 t2)(mult q4 t4)))
+;        
+
 mMult isZ g h m1 m2 = 
     case m1 of 
          Error -> Error
@@ -154,11 +166,8 @@ mMult isZ g h m1 m2 =
                    Error -> Error
                    | None -> None 
                    | Val (v) -> Error
-                   | Node (t1, t2, t3, t4) -> (reduceTree
-                                               (mAdd isZ g (mMult isZ g h q1 t1)(mMult isZ g h q2 t3)) 
-                                               (mAdd isZ g (mMult isZ g h q1 t2)(mMult isZ g h q2 t4)) 
-                                               (mAdd isZ g (mMult isZ g h q3 t1)(mMult isZ g h q4 t3)) 
-                                               (mAdd isZ g (mMult isZ g h q3 t2)(mMult isZ g h q4 t4))));
+                   | Node (t1, t2, t3, t4) -> (combine (mAdd isZ g) (mMult isZ g h) q1 q2 q3 q4 t1 t2 t3 t4))
+;
 
 eWizeScalarOp isZ g s m = 
     case m of
