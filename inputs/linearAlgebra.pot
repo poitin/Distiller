@@ -1,6 +1,6 @@
 main = 
  -- SLOW / DIV
-  (mMult isZ1 p1 mlt m2 (mask m3 msk))
+ -- (mMult isZ1 p1 mlt m2 (mask m3 msk))
 
  -- OK
  -- (mAdd isZ1 p1 m2 (mask m3 msk))
@@ -12,7 +12,7 @@ main =
  -- kron isZZ pp (mask mm mskm) mm3 
 
  -- OK
- -- mask (kron isZ1 p1 m2 m3) msk
+  mask (kron isZ1 p1 m2 m3) msk
 
  -- OK
  -- mAdd isZ2 p2 (mAdd isZ1 p1 m2 m3) m1
@@ -34,6 +34,25 @@ main =
 
  -- OK
  -- mAdd isZ1 p1 (kron isZ1 p1 m2 m3) m1
+
+ -- OK
+ -- mAdd isZ pls   (kron isZ mlt m1 (Node ((Node (Val (x), None, Val (y), None)),
+ --                                   None, 
+ --                                   (Node (Val (a), Val (b), None, None)),
+ --                                   (Node (None, None, None, Val (c)))))) 
+ --                (kron isZ mlt m2 (Node ((Node (Val (x), None, Val (y), None)),
+ --                                   None,
+ --                                   (Node (Val (a), Val (b), None, None)),
+ --                                   (Node (None, None, None, Val (c))))))
+
+ -- OK
+ -- mAdd isZ pls  (kron isZ mlt m1 (Node ((Node (Val (x), None, Val (y), None)),
+ --                                   None, 
+ --                                   (Node (Val (a), Val (b), None, None)),
+ --                                   (Node (None, None, None, Val (c)))))) 
+ --               m2
+
+
  ;
 
 mkNode isZ x = case (isZ x) of True -> None | False -> Val(x); 
