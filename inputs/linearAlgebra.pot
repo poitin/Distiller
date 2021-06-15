@@ -1,23 +1,31 @@
+import Bool
+
 main = 
  -- SLOW / DIV
- -- (mMult isZ1 p1 mlt m2 (mask m3 msk))
+ -- mMult isZ1 p1 mlt m2 (mask m3 msk)
 
  -- OK
  -- (mAdd isZ1 p1 m2 (mask m3 msk))
 
  -- OK
- -- mask (mAdd isZ1 p1 m2 m3) msk
- 
- -- OK
- -- kron isZZ pp (mask mm mskm) mm3 
+ -- (mAdd isZ1 p1 (mask m3 msk) m2)
 
  -- OK
-  mask (kron isZ1 p1 m2 m3) msk
+ -- mask (mAdd isZ1 p1 m2 m3) msk
+ 
+ -- OK 
+ -- kron isZ p (mask m1 msk) m2 
+
+ -- OK
+ -- kron isZ p m2 (mask m1 msk)
+
+ -- OK 
+ -- mask (kron isZ1 p1 m2 m3) msk
 
  -- OK
  -- mAdd isZ2 p2 (mAdd isZ1 p1 m2 m3) m1
 
- -- OK
+ -- OK but slow
  -- mAdd isZ2 p2 (mAdd isZ1 p1 m2 m3) (mAdd isZ2 p2 m1 m4)
  
  -- OK but slow
@@ -27,7 +35,7 @@ main =
  -- mask (mask m1 msk1) msk2
 
  -- OK
- -- eWizeScalarOp isZ1 g s2 (eWizeScalarOp isZ1 g s m)
+ -- eWizeScalarOp isZ g s2 (eWizeScalarOp isZ g s m)
  
  -- OK
  -- eWizeScalarOp isZ1 g s2 (eWizeScalarOp isZ2 g2 s m)
@@ -59,6 +67,28 @@ mkNode isZ x = case (isZ x) of True -> None | False -> Val(x);
 
 reduceTree n1 n2 n3 n4 = Node (n1, n2, n3, n4);
 
+reduceTree2 n1 n2 n3 n4 =
+    let nd = Node (n1, n2, n3, n4) in
+    (case n1 of 
+         None -> (case n2 of 
+                       None -> (case n3 of 
+                                     None -> (case n4 of 
+                                                   None -> None
+                                                   | Error -> Error
+                                                   | Val (v4) -> nd
+                                                   | Node (m1, m2, m3, m4) -> nd)
+                                     | Error -> Error
+                                     | Val (v3) -> nd
+                                     | Node (l1, l2, l3, l4) -> nd)
+                       | Error -> Error
+                       | Val (v2) -> nd
+                       | Node (k1, k2, k3, k4) -> nd)
+         | Error -> Error
+         | Val (v1) -> nd
+         | Node (j1, j2, j3, j4) -> nd)
+
+;
+
 reduceTree1 n1 n2 n3 n4 =
     case n1 of 
          None -> (case n2 of 
@@ -76,7 +106,8 @@ reduceTree1 n1 n2 n3 n4 =
                        | Node (k1, k2, k3, k4) -> Node (n1, n2, n3, n4))
          | Error -> Error
          | Val (v1) -> Node (n1, n2, n3, n4)
-         | Node (j1, j2, j3, j4) -> Node (n1, n2, n3, n4); 
+         | Node (j1, j2, j3, j4) -> Node (n1, n2, n3, n4)
+;
 
 mAdd isZ g m1 m2 = 
     case m1 of
@@ -91,18 +122,18 @@ mAdd isZ g m1 m2 =
                                     Error -> Error
                                     | None -> m1 
                                     | Val (v) -> Error 
-                                    | Node (t1, t2, t3, t4) -> reduceTree 
+                                    | Node (t1, t2, t3, t4) -> (reduceTree 
                                                                     (mAdd isZ g q1 t1) 
                                                                     (mAdd isZ g q2 t2) 
                                                                     (mAdd isZ g q3 t3) 
-                                                                    (mAdd isZ g q4 t4));
+                                                                    (mAdd isZ g q4 t4)));
 
 mask m msk =
     case msk of 
          MNone -> None 
          | MVal -> m
          | MNode (q1, q2, q3, q4) -> 
-               (case m3 of
+               (case m of
                     Error -> Error
                     | None -> None
                     | Val (v) -> Error
@@ -116,7 +147,7 @@ mMult isZ g h m1 m2 =
              (case m2 of
                   Error -> Error 
                   | None -> None
-                  | Val (v) -> mkNode isZ (h v1 v) 
+                  | Val (v) -> (mkNode isZ (h v1 v))
                   | Node (t1, t2, t3, t4) -> Error)
          | Node (q1, q2, q3, q4) -> 
               (case m2 of 
