@@ -46,13 +46,13 @@ To apply the distillation transformation to the current program:
 POT> :distill  
 main = f xs ys zs;  
 f xs ys zs = case xs of  
-                             Nil -> case ys of  
-                                                Nil -> zs  
-                                             | Cons(x,xs) -> Cons(x,f' xs zs)  
-                        | Cons(x,xs) -> Cons(x,f xs ys zs);  
+                  Nil -> case ys of  
+                              Nil -> zs  
+                            | Cons(x,xs) -> Cons(x,f' xs zs)  
+                | Cons(x,xs) -> Cons(x,f xs ys zs);  
 f' xs' zs = case xs' of  
-                           Nil -> zs  
-                        | Cons(x,xs) -> Cons(x,f' xs zs)  
+                 Nil -> zs  
+               | Cons(x,xs) -> Cons(x,f' xs zs)  
 ```
 
 To evaluate the current program:
