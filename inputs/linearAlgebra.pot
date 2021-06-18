@@ -48,6 +48,9 @@ main =
  -- mAdd isZ1 p1 (kron isZ1 p1 m2 m3) m1
 
  -- OK
+  map isZ fT (kron isZ op m1 m2)
+
+ -- OK
  -- mAdd isZ pls   (kron isZ mlt m1 (Node ((Node (Val (x), None, Val (y), None)),
  --                                   None, 
  --                                   (Node (Val (a), Val (b), None, None)),
@@ -66,6 +69,8 @@ main =
 
 
  ;
+
+fT x = True;
 
 mkNode isZ x = case (isZ x) of True -> None | False -> Val(x); 
 
@@ -169,24 +174,25 @@ mMult isZ g h m1 m2 =
                    | Node (t1, t2, t3, t4) -> (combine (mAdd isZ g) (mMult isZ g h) q1 q2 q3 q4 t1 t2 t3 t4))
 ;
 
-eWizeScalarOp isZ g s m = 
+map isZ f m = 
     case m of
          Error -> Error
          | None -> None
-         | Val (v) -> (mkNode isZ (g v s))
+         | Val (v) -> (mkNode isZ (f s))
          | Node (q1, q2, q3, q4) -> (reduceTree 
-                                     (eWizeScalarOp isZ g s q1) 
-                                     (eWizeScalarOp isZ g s q2) 
-                                     (eWizeScalarOp isZ g s q3) 
-                                     (eWizeScalarOp isZ g s q4));
+                                     (map isZ f q1) 
+                                     (map isZ f q2) 
+                                     (map isZ f q3) 
+                                     (map isZ f q4));
                       
 kron isZ g m1 m2 =
     case m1 of 
          Error -> Error
          | None -> None
-         | Val (v) -> (eWizeScalarOp isZ g v m2)
+         | Val (v) -> (map isZ (g v) m2)
          | Node (q1, q2, q3, q4) -> (reduceTree 
                                       (kron isZ g q1 m2) 
                                       (kron isZ g q2 m2) 
                                       (kron isZ g q3 m2) 
                                       (kron isZ g q4 m2))
+
