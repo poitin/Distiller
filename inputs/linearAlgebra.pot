@@ -56,14 +56,17 @@ main =
  -- OK
  -- map isZ f (mAdd isZ op m1 m2)
 
+ -- DIV or SLOW
+ -- fold or (False) (map isZ fT (kron isZ op m1 m2))
+
  -- OK
  -- mAdd isZ op m1 m1
 
- --
- map isZ2 fT (kron isZ mlt m1 (Node ((Node (Val (x), None, Val (y), None)),
-                                      None, 
-                                      (Node (Val (a), Val (b), None, None)),
-                                      (Node (None, None, None, Val (c)))))) 
+ -- OK
+ -- map isZ2 fT (kron isZ mlt m1 (Node ((Node (Val (x), None, Val (y), None)),
+ --                                      None, 
+ --                                      (Node (Val (a), Val (b), None, None)),
+ --                                      (Node (None, None, None, Val (c)))))) 
 
  -- OK
  -- mAdd isZ pls   (kron isZ mlt m1 (Node ((Node (Val (x), None, Val (y), None)),
@@ -211,3 +214,11 @@ kron isZ g m1 m2 =
                                       (kron isZ g q3 m2) 
                                       (kron isZ g q4 m2))
 
+;
+
+fold f s m =
+     case m of
+       None -> s
+     | Error -> s
+     | Val(v) -> (f s v)
+     | Node (n1, n2, n3, n4) -> (fold f (fold f (fold f (fold f s n1) n2) n3) n4)
