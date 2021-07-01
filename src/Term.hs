@@ -34,7 +34,8 @@ instance Show Term where
 
 type Prog = (Term,[(String,([String],Term))])
 
-showProg p = render $ prettyProg p
+showProg p = renderStyle (Style { lineLength = 100, ribbonsPerLine = 1.1, mode = PageMode }) $ prettyProg p
+   --render $ prettyProg p
 
 -- equality of terms
 
@@ -391,43 +392,41 @@ stripLambda t = ([],t)
 
 blank = P.space
 
+prettyCon t@(Con c ts)
+   | isNat t   = int $ con2nat t
+   | isList t  = brackets $ sep $ punctuate comma $ map prettyTerm $ con2list t
+   | null ts   = text c
+   | otherwise = text c <> parens (sep $ punctuate comma $ map prettyTerm ts)
+
 prettyTerm (Free x) = text x
 prettyTerm (Bound i) = text "#" <> int i
 prettyTerm t@(Lambda _ _) = let (xs,t') = stripLambda t
                             in  text "\\" <> hsep (map text xs) <> text "." <> prettyTerm t'
-prettyTerm t@(Con c ts)
-   | isNat t   = int $ con2nat t
-   | isList t  = text "[" <> hcat (punctuate comma $ map prettyTerm $ con2list t) <> text "]"
-   | null ts   = text c
-   | otherwise = text c <> parens (hcat $ punctuate comma $ map prettyTerm ts)
+prettyTerm t@(Con c ts) = prettyCon t
 prettyTerm (Apply t u) = prettyTerm t <+> prettyAtom u
 prettyTerm (Fun f) = text f
-prettyTerm (Case t (b:bs)) = hang (text "case" <+> prettyAtom t <+> text "of") 1 (blank <+> prettyBranch b $$ vcat (map ((text "|" <+>).prettyBranch) bs)) where
-   prettyBranch (c,[],t) = text c <+> text "->" <+> prettyTerm t
+prettyTerm (Case t (b:bs)) = 
+   parens $ hang (text "case" <+> prettyAtom t <+> text "of") 1 (blank <+> prettyBranch b $$ vcat (map ((text "|" <+>).prettyBranch) bs)) where
+   prettyBranch (c,[],t) = text c <+> text "->" $$ (nest 2 $ prettyTerm t)
    prettyBranch (c,xs,t) = let fv = renameVars (free t) xs
                                xs' = take (length xs) fv
                                t' = foldr concrete t xs'
-                           in  text c <> parens(hcat $ punctuate comma $ map text xs') <+> text "->" <+> prettyTerm t' $$ empty
+                           in  text c <> parens(hcat $ punctuate comma $ map text xs') <+> text "->" $$ (nest 2 $ prettyTerm t' $$ empty)
 prettyTerm (Let x t u) = let x' = renameVar (free u) x
                          in  (text "let" <+> text x' <+> text "=" <+> prettyTerm t) $$ (text "in" <+> prettyTerm (concrete x' u))
 prettyTerm (Unfold t u) = text "Unfold" <+> prettyAtom t <+> text "=" <+> prettyTerm u
 prettyTerm (Fold t u) = text "Fold" <+> prettyAtom t <+> prettyAtom u
 
 prettyAtom (Free x) = text x
-prettyAtom t@(Con c ts)
-   | isNat t   = int $ con2nat t
-   | isList t  = text "[" <> hcat (punctuate comma $ map prettyTerm  $ con2list t) <> text "]"
-   | null ts   = text c
-   | otherwise = text c <> parens (hcat $ punctuate comma $ map prettyTerm ts)
+prettyAtom t@(Con c ts) = prettyCon t
 prettyAtom (Fun f) = text f
 prettyAtom t = parens $ prettyTerm t
 
 prettyProg (t,d) = let d' = [f | f <- d, fst f `elem` funs (t,d)]          
                    in  prettyEnv (("main",([],t)):d')
 
-prettyEnv [] = empty
-prettyEnv [(f,(xs,t))] = text f <+> hsep (map text xs) <+> equals <+> prettyTerm (foldr concrete t xs)
-prettyEnv ((f,(xs,t)):fs) = text f <+> hsep (map text xs) <+> equals <+> prettyTerm (foldr concrete t xs) <> semi $$ prettyEnv fs
+
+prettyEnv xs = vcat (punctuate semi $ map (\(f, (xs,t)) -> hang (text f <+> hsep (map text xs) <+> equals) 2 (prettyTerm (foldr concrete t xs))) xs)
 
 isList (Con "Nil" []) = True
 isList (Con "Cons" [h,t]) = isList t
