@@ -40,7 +40,7 @@ helpMessage = "\n:load filename\t\tTo load the given filename\n"++
                ":prog\t\t\tTo print the current program\n"++
                ":term\t\t\tTo print the current term\n"++
                ":eval\t\t\tTo evaluate the current program\n"++
-               ":distill <filename>\t\tTo distill the current program. If file name provided, deistillation result will be stored to the specified file.\n"++
+               ":distill <filename>\t\tTo distill the current program. If the file name provided, the distillation result will be stored in the specified file.\n"++
                ":quit\t\t\tTo quit\n"++
                ":help\t\t\tTo print this message\n"
 

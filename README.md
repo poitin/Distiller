@@ -12,7 +12,7 @@ POT> :help
 :prog                   To print the current program  
 :term                   To print the current term  
 :eval                   To evaluate the current program  
-:distill                To distill the current program  
+:distill <filename>     To distill the current program. If the file name provided, the distillation result will be stored in the specified file.  
 :quit                   To quit  
 :help                   To print this message  
 ```
