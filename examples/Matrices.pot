@@ -1,0 +1,16 @@
+
+-- inputs for mAdd + mAdd experiment
+experiment_mAddM1 = QNode (QNone, QNone, (QVal (True)), QNone);
+experiment_mAddM2 = QNode ((QVal (True)), QNone, QNone, (QVal (True)));
+experiment_mAddM3 = QNode (QNone, (QVal (True)), QNone, QNone);
+
+-- inputs for mask + mask experiment
+experiment_msk11 = MNode ((MVal), (MVal), MNone, (MVal));
+experiment_msk12 = MNode ((MVal), (MVal), (MVal), (MVal));
+experiment_mask1M1 = Node ((Val (True)), (Val (True)), (Val (True)), (Val (True)));
+
+-- inputs for kron + mask experiment
+msk = MNode ((MVal), (MVal), (MVal), MNone);
+m1 = Node ((Val (True)), (Val (True)), None, (Val (True)));
+m2 = Node ((Val (True)), None, (Val (True)), (Val (True)))
+
