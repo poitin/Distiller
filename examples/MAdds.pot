@@ -1,7 +1,8 @@
 import Bool
 import QTree
+import Matrices
 
-main = mAdd isZ (or) (mAdd isZ (or) m2 m3) m1;
+main = mAdd isZ (or) (mAdd isZ (or) (m2) (m3)) (m1);
 
 isZ x = case x of
         True -> False
