@@ -2,6 +2,8 @@ import Bool
 
 main = 
 
+  kron isZ (or) (mask m1 msk) m2
+
  -- ???
  -- mMult isZ f g m1 m2
 
@@ -85,8 +87,7 @@ main =
  --                                   (Node (None, None, None, Val (c)))))) 
  --               m2
 
-
- ;
+;
 
 fT x = True;
 
@@ -196,7 +197,7 @@ map isZ f m =
     case m of
          Error -> Error
          | None -> None
-         | Val (v) -> (mkNode isZ (f s))
+         | Val (v) -> (mkNode isZ (f v))
          | Node (q1, q2, q3, q4) -> (reduceTree 
                                      (map isZ f q1) 
                                      (map isZ f q2) 
