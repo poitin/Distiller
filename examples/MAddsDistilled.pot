@@ -2,8 +2,8 @@ import Bool
 import QTree
 import Matrices
 
-main = f m2 m3 m1 g;
-f m2 m3 m1 g =
+main = f m2 m3 m1;
+f m2 m3 m1 =
   (case m2 of
       Error ->
         Error
@@ -64,39 +64,31 @@ f m2 m3 m1 g =
                 | Node(t1,t2,t3,t4) ->
                     Error)
           | Val(v) ->
-              (case (g v1 v) of
+              (case v1 of
                   True ->
                     (case m1 of
                         Error ->
                           Error
                       | None ->
-                          (case (g v1 v) of
-                              True ->
-                                Val(g v1 v)
-                            | False ->
-                                None)
-                      | Val(v') ->
-                          (case (g v1 v) of
-                              True ->
-                                Val((case (g v1 v) of
-                                        True ->
-                                          True
-                                      | False ->
-                                          v'))
-                            | False ->
-                                (case v' of
-                                    True ->
-                                      Val((case (g v1 v) of
-                                              True ->
-                                                True
-                                            | False ->
-                                                True))
-                                  | False ->
-                                      None))
+                          Val(True)
+                      | Val(v) ->
+                          Val(True)
                       | Node(t1,t2,t3,t4) ->
                           Error)
                 | False ->
-                    m1)
+                    (case v of
+                        True ->
+                          (case m1 of
+                              Error ->
+                                Error
+                            | None ->
+                                Val(True)
+                            | Val(v) ->
+                                Val(True)
+                            | Node(t1,t2,t3,t4) ->
+                                Error)
+                      | False ->
+                          m1))
           | Node(t1,t2,t3,t4) ->
               Error)
     | Node(q1,q2,q3,q4) ->
@@ -120,12 +112,12 @@ f m2 m3 m1 g =
                   Error ->
                     Error
                 | None ->
-                    f''' q1 t1 g q2 t2 q3 t3 q4 t4
+                    f''' q1 t1 q2 t2 q3 t3 q4 t4
                 | Val(v) ->
                     Error
                 | Node(t1',t2',t3',t4') ->
-                    Node(f q1 t1 t1' g, f q2 t2 t2' g, f q3 t3 t3' g, f q4 t4 t4' g))));
-f''' q1 t1 g q2 t2 q3 t3 q4 t4 =
+                    Node(f q1 t1 t1', f q2 t2 t2', f q3 t3 t3', f q4 t4 t4'))));
+f''' q1 t1 q2 t2 q3 t3 q4 t4 =
   Node((case q1 of
            Error ->
              Error
@@ -138,11 +130,15 @@ f''' q1 t1 g q2 t2 q3 t3 q4 t4 =
                | None ->
                    Val(v1)
                | Val(v) ->
-                   (case (g v1 v) of
+                   (case v1 of
                        True ->
-                         Val(g v1 v)
+                         Val(True)
                      | False ->
-                         None)
+                         (case v of
+                             True ->
+                               Val(True)
+                           | False ->
+                               None))
                | Node(t1,t2,t3,t4) ->
                    Error)
          | Node(q1,q2,q3,q4) ->
@@ -154,7 +150,7 @@ f''' q1 t1 g q2 t2 q3 t3 q4 t4 =
                | Val(v) ->
                    Error
                | Node(t1,t2,t3,t4) ->
-                   f''' q1 t1 g q2 t2 q3 t3 q4 t4)),
+                   f''' q1 t1 q2 t2 q3 t3 q4 t4)),
        (case q2 of
            Error ->
              Error
@@ -167,11 +163,15 @@ f''' q1 t1 g q2 t2 q3 t3 q4 t4 =
                | None ->
                    Val(v1)
                | Val(v) ->
-                   (case (g v1 v) of
+                   (case v1 of
                        True ->
-                         Val(g v1 v)
+                         Val(True)
                      | False ->
-                         None)
+                         (case v of
+                             True ->
+                               Val(True)
+                           | False ->
+                               None))
                | Node(t1,t2,t3,t4) ->
                    Error)
          | Node(q1,q2,q3,q4) ->
@@ -183,7 +183,7 @@ f''' q1 t1 g q2 t2 q3 t3 q4 t4 =
                | Val(v) ->
                    Error
                | Node(t1,t2,t3,t4) ->
-                   f''' q1 t1 g q2 t2 q3 t3 q4 t4)),
+                   f''' q1 t1 q2 t2 q3 t3 q4 t4)),
        (case q3 of
            Error ->
              Error
@@ -196,11 +196,15 @@ f''' q1 t1 g q2 t2 q3 t3 q4 t4 =
                | None ->
                    Val(v1)
                | Val(v) ->
-                   (case (g v1 v) of
+                   (case v1 of
                        True ->
-                         Val(g v1 v)
+                         Val(True)
                      | False ->
-                         None)
+                         (case v of
+                             True ->
+                               Val(True)
+                           | False ->
+                               None))
                | Node(t1,t2,t3,t4) ->
                    Error)
          | Node(q1,q2,q3,q4) ->
@@ -212,7 +216,7 @@ f''' q1 t1 g q2 t2 q3 t3 q4 t4 =
                | Val(v) ->
                    Error
                | Node(t1,t2,t3,t4) ->
-                   f''' q1 t1 g q2 t2 q3 t3 q4 t4)),
+                   f''' q1 t1 q2 t2 q3 t3 q4 t4)),
        (case q4 of
            Error ->
              Error
@@ -225,11 +229,15 @@ f''' q1 t1 g q2 t2 q3 t3 q4 t4 =
                | None ->
                    Val(v1)
                | Val(v) ->
-                   (case (g v1 v) of
+                   (case v1 of
                        True ->
-                         Val(g v1 v)
+                         Val(True)
                      | False ->
-                         None)
+                         (case v of
+                             True ->
+                               Val(True)
+                           | False ->
+                               None))
                | Node(t1,t2,t3,t4) ->
                    Error)
          | Node(q1,q2,q3,q4) ->
@@ -241,7 +249,7 @@ f''' q1 t1 g q2 t2 q3 t3 q4 t4 =
                | Val(v) ->
                    Error
                | Node(t1,t2,t3,t4) ->
-                   f''' q1 t1 g q2 t2 q3 t3 q4 t4)));
+                   f''' q1 t1 q2 t2 q3 t3 q4 t4)));
 f'' q1 t1 q2 t2 q3 t3 q4 t4 =
   Node((case q1 of
            Error ->
@@ -508,5 +516,3 @@ f' q1 t1 q2 t2 q3 t3 q4 t4 =
                    Error
                | Node(t1,t2,t3,t4) ->
                    f' q1 t1 q2 t2 q3 t3 q4 t4)))
-
-
