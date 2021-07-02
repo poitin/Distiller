@@ -1,0 +1,136 @@
+import Bool
+
+fT x = True;
+
+mkNode isZ x = case (isZ x) of True -> None | False -> Val(x); 
+
+reduceTree n1 n2 n3 n4 = Node (n1, n2, n3, n4);
+
+reduceTree2 n1 n2 n3 n4 =
+    let nd = Node (n1, n2, n3, n4) in
+    (case n1 of 
+         None -> (case n2 of 
+                       None -> (case n3 of 
+                                     None -> (case n4 of 
+                                                   None -> None
+                                                   | Error -> Error
+                                                   | Val (v4) -> nd
+                                                   | Node (m1, m2, m3, m4) -> nd)
+                                     | Error -> Error
+                                     | Val (v3) -> nd
+                                     | Node (l1, l2, l3, l4) -> nd)
+                       | Error -> Error
+                       | Val (v2) -> nd
+                       | Node (k1, k2, k3, k4) -> nd)
+         | Error -> Error
+         | Val (v1) -> nd
+         | Node (j1, j2, j3, j4) -> nd)
+
+;
+
+reduceTree1 n1 n2 n3 n4 =
+    case n1 of 
+         None -> (case n2 of 
+                       None -> (case n3 of 
+                                     None -> (case n4 of 
+                                                   None -> None
+                                                   | Error -> Error
+                                                   | Val (v4) -> Node (n1, n2, n3, n4)
+                                                   | Node (m1, m2, m3, m4) -> Node (n1, n2, n3, n4))
+                                     | Error -> Error
+                                     | Val (v3) -> Node (n1, n2, n3, n4)
+                                     | Node (l1, l2, l3, l4) -> Node (n1, n2, n3, n4))
+                       | Error -> Error
+                       | Val (v2) -> Node (n1, n2, n3, n4)
+                       | Node (k1, k2, k3, k4) -> Node (n1, n2, n3, n4))
+         | Error -> Error
+         | Val (v1) -> Node (n1, n2, n3, n4)
+         | Node (j1, j2, j3, j4) -> Node (n1, n2, n3, n4)
+;
+
+mAdd isZ g m1 m2 = 
+    case m1 of
+         Error -> Error
+         | None -> (m2)
+         | Val (v1) -> (case m2 of 
+                        Error -> Error 
+                        | None -> m1 
+                        | Val (v) -> (mkNode isZ (g v1 v))
+                        | Node (t1, t2, t3, t4) -> Error)
+         | Node (q1, q2, q3, q4) -> (case m2 of 
+                                    Error -> Error
+                                    | None -> m1 
+                                    | Val (v) -> Error 
+                                    | Node (t1, t2, t3, t4) -> (reduceTree 
+                                                                    (mAdd isZ g q1 t1) 
+                                                                    (mAdd isZ g q2 t2) 
+                                                                    (mAdd isZ g q3 t3) 
+                                                                    (mAdd isZ g q4 t4)));
+
+mask m msk =
+    case msk of 
+         MNone -> None 
+         | MVal -> m
+         | MNode (q1, q2, q3, q4) -> 
+               (case m of
+                    Error -> Error
+                    | None -> None
+                    | Val (v) -> Error
+                    | Node (t1, t2, t3, t4) -> (reduceTree (mask t1 q1) (mask t2 q2) (mask t3 q3) (mask t4 q4)));
+
+combine add mult q1 q2 q3 q4 t1 t2 t3 t4 =
+   (reduceTree
+        (add (mult q1 t1)(mult q2 t3)) 
+        (add (mult q1 t2)(mult q2 t4)) 
+        (add (mult q3 t1)(mult q4 t3)) 
+        (add (mult q3 t2)(mult q4 t4)))
+;        
+
+mMult isZ g h m1 m2 = 
+    case m1 of 
+         Error -> Error
+         | None -> None
+         | Val (v1) -> 
+             (case m2 of
+                  Error -> Error 
+                  | None -> None
+                  | Val (v) -> (mkNode isZ (h v1 v))
+                  | Node (t1, t2, t3, t4) -> Error)
+         | Node (q1, q2, q3, q4) -> 
+              (case m2 of 
+                   Error -> Error
+                   | None -> None 
+                   | Val (v) -> Error
+                   | Node (t1, t2, t3, t4) -> (combine (mAdd isZ g) (mMult isZ g h) q1 q2 q3 q4 t1 t2 t3 t4))
+;
+
+map isZ f m = 
+    case m of
+         Error -> Error
+         | None -> None
+         | Val (v) -> (mkNode isZ (f s))
+         | Node (q1, q2, q3, q4) -> (reduceTree 
+                                     (map isZ f q1) 
+                                     (map isZ f q2) 
+                                     (map isZ f q3) 
+                                     (map isZ f q4));
+                      
+kron isZ g m1 m2 =
+    case m1 of 
+         Error -> Error
+         | None -> None
+         | Val (v) -> (map isZ (g v) m2)
+         | Node (q1, q2, q3, q4) -> (reduceTree 
+                                      (kron isZ g q1 m2) 
+                                      (kron isZ g q2 m2) 
+                                      (kron isZ g q3 m2) 
+                                      (kron isZ g q4 m2))
+
+;
+
+fold f s m =
+     case m of
+       None -> s
+     | Error -> s
+     | Val(v) -> (f s v)
+     | Node (n1, n2, n3, n4) -> (fold f (fold f (fold f (fold f s n1) n2) n3) n4)

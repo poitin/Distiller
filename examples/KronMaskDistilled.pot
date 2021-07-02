@@ -1,0 +1,17 @@
+import Bool
+import QTree
+import Matrices
+
+main = f m1 m2;
+f m1 m2 =
+  (case m1 of
+      Error ->
+        Error
+    | None ->
+        None
+    | Val(v) ->
+        Error
+    | Node(t1,t2,t3,t4) ->
+        Node(f t1 m2, f t2 m2, f t3 m2, f t4 m2))
+
+

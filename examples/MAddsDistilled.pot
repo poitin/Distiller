@@ -1,0 +1,512 @@
+import Bool
+import QTree
+import Matrices
+
+main = f m2 m3 m1 g;
+f m2 m3 m1 g =
+  (case m2 of
+      Error ->
+        Error
+    | None ->
+        (case m3 of
+            Error ->
+              Error
+          | None ->
+              m1
+          | Val(v1) ->
+              (case m1 of
+                  Error ->
+                    Error
+                | None ->
+                    Val(v1)
+                | Val(v) ->
+                    (case v1 of
+                        True ->
+                          Val(True)
+                      | False ->
+                          (case v of
+                              True ->
+                                Val(True)
+                            | False ->
+                                None))
+                | Node(t1,t2,t3,t4) ->
+                    Error)
+          | Node(q1,q2,q3,q4) ->
+              (case m1 of
+                  Error ->
+                    Error
+                | None ->
+                    Node(q1, q2, q3, q4)
+                | Val(v) ->
+                    Error
+                | Node(t1,t2,t3,t4) ->
+                    f' q1 t1 q2 t2 q3 t3 q4 t4))
+    | Val(v1) ->
+        (case m3 of
+            Error ->
+              Error
+          | None ->
+              (case m1 of
+                  Error ->
+                    Error
+                | None ->
+                    Val(v1)
+                | Val(v) ->
+                    (case v1 of
+                        True ->
+                          Val(True)
+                      | False ->
+                          (case v of
+                              True ->
+                                Val(True)
+                            | False ->
+                                None))
+                | Node(t1,t2,t3,t4) ->
+                    Error)
+          | Val(v) ->
+              (case (g v1 v) of
+                  True ->
+                    (case m1 of
+                        Error ->
+                          Error
+                      | None ->
+                          (case (g v1 v) of
+                              True ->
+                                Val(g v1 v)
+                            | False ->
+                                None)
+                      | Val(v') ->
+                          (case (g v1 v) of
+                              True ->
+                                Val((case (g v1 v) of
+                                        True ->
+                                          True
+                                      | False ->
+                                          v'))
+                            | False ->
+                                (case v' of
+                                    True ->
+                                      Val((case (g v1 v) of
+                                              True ->
+                                                True
+                                            | False ->
+                                                True))
+                                  | False ->
+                                      None))
+                      | Node(t1,t2,t3,t4) ->
+                          Error)
+                | False ->
+                    m1)
+          | Node(t1,t2,t3,t4) ->
+              Error)
+    | Node(q1,q2,q3,q4) ->
+        (case m3 of
+            Error ->
+              Error
+          | None ->
+              (case m1 of
+                  Error ->
+                    Error
+                | None ->
+                    Node(q1, q2, q3, q4)
+                | Val(v) ->
+                    Error
+                | Node(t1,t2,t3,t4) ->
+                    f'' q1 t1 q2 t2 q3 t3 q4 t4)
+          | Val(v) ->
+              Error
+          | Node(t1,t2,t3,t4) ->
+              (case m1 of
+                  Error ->
+                    Error
+                | None ->
+                    f''' q1 t1 g q2 t2 q3 t3 q4 t4
+                | Val(v) ->
+                    Error
+                | Node(t1',t2',t3',t4') ->
+                    Node(f q1 t1 t1' g, f q2 t2 t2' g, f q3 t3 t3' g, f q4 t4 t4' g))));
+f''' q1 t1 g q2 t2 q3 t3 q4 t4 =
+  Node((case q1 of
+           Error ->
+             Error
+         | None ->
+             t1
+         | Val(v1) ->
+             (case t1 of
+                 Error ->
+                   Error
+               | None ->
+                   Val(v1)
+               | Val(v) ->
+                   (case (g v1 v) of
+                       True ->
+                         Val(g v1 v)
+                     | False ->
+                         None)
+               | Node(t1,t2,t3,t4) ->
+                   Error)
+         | Node(q1,q2,q3,q4) ->
+             (case t1 of
+                 Error ->
+                   Error
+               | None ->
+                   Node(q1, q2, q3, q4)
+               | Val(v) ->
+                   Error
+               | Node(t1,t2,t3,t4) ->
+                   f''' q1 t1 g q2 t2 q3 t3 q4 t4)),
+       (case q2 of
+           Error ->
+             Error
+         | None ->
+             t2
+         | Val(v1) ->
+             (case t2 of
+                 Error ->
+                   Error
+               | None ->
+                   Val(v1)
+               | Val(v) ->
+                   (case (g v1 v) of
+                       True ->
+                         Val(g v1 v)
+                     | False ->
+                         None)
+               | Node(t1,t2,t3,t4) ->
+                   Error)
+         | Node(q1,q2,q3,q4) ->
+             (case t2 of
+                 Error ->
+                   Error
+               | None ->
+                   Node(q1, q2, q3, q4)
+               | Val(v) ->
+                   Error
+               | Node(t1,t2,t3,t4) ->
+                   f''' q1 t1 g q2 t2 q3 t3 q4 t4)),
+       (case q3 of
+           Error ->
+             Error
+         | None ->
+             t3
+         | Val(v1) ->
+             (case t3 of
+                 Error ->
+                   Error
+               | None ->
+                   Val(v1)
+               | Val(v) ->
+                   (case (g v1 v) of
+                       True ->
+                         Val(g v1 v)
+                     | False ->
+                         None)
+               | Node(t1,t2,t3,t4) ->
+                   Error)
+         | Node(q1,q2,q3,q4) ->
+             (case t3 of
+                 Error ->
+                   Error
+               | None ->
+                   Node(q1, q2, q3, q4)
+               | Val(v) ->
+                   Error
+               | Node(t1,t2,t3,t4) ->
+                   f''' q1 t1 g q2 t2 q3 t3 q4 t4)),
+       (case q4 of
+           Error ->
+             Error
+         | None ->
+             t4
+         | Val(v1) ->
+             (case t4 of
+                 Error ->
+                   Error
+               | None ->
+                   Val(v1)
+               | Val(v) ->
+                   (case (g v1 v) of
+                       True ->
+                         Val(g v1 v)
+                     | False ->
+                         None)
+               | Node(t1,t2,t3,t4) ->
+                   Error)
+         | Node(q1,q2,q3,q4) ->
+             (case t4 of
+                 Error ->
+                   Error
+               | None ->
+                   Node(q1, q2, q3, q4)
+               | Val(v) ->
+                   Error
+               | Node(t1,t2,t3,t4) ->
+                   f''' q1 t1 g q2 t2 q3 t3 q4 t4)));
+f'' q1 t1 q2 t2 q3 t3 q4 t4 =
+  Node((case q1 of
+           Error ->
+             Error
+         | None ->
+             t1
+         | Val(v1) ->
+             (case t1 of
+                 Error ->
+                   Error
+               | None ->
+                   Val(v1)
+               | Val(v) ->
+                   (case v1 of
+                       True ->
+                         Val(True)
+                     | False ->
+                         (case v of
+                             True ->
+                               Val(True)
+                           | False ->
+                               None))
+               | Node(t1,t2,t3,t4) ->
+                   Error)
+         | Node(q1,q2,q3,q4) ->
+             (case t1 of
+                 Error ->
+                   Error
+               | None ->
+                   Node(q1, q2, q3, q4)
+               | Val(v) ->
+                   Error
+               | Node(t1,t2,t3,t4) ->
+                   f'' q1 t1 q2 t2 q3 t3 q4 t4)),
+       (case q2 of
+           Error ->
+             Error
+         | None ->
+             t2
+         | Val(v1) ->
+             (case t2 of
+                 Error ->
+                   Error
+               | None ->
+                   Val(v1)
+               | Val(v) ->
+                   (case v1 of
+                       True ->
+                         Val(True)
+                     | False ->
+                         (case v of
+                             True ->
+                               Val(True)
+                           | False ->
+                               None))
+               | Node(t1,t2,t3,t4) ->
+                   Error)
+         | Node(q1,q2,q3,q4) ->
+             (case t2 of
+                 Error ->
+                   Error
+               | None ->
+                   Node(q1, q2, q3, q4)
+               | Val(v) ->
+                   Error
+               | Node(t1,t2,t3,t4) ->
+                   f'' q1 t1 q2 t2 q3 t3 q4 t4)),
+       (case q3 of
+           Error ->
+             Error
+         | None ->
+             t3
+         | Val(v1) ->
+             (case t3 of
+                 Error ->
+                   Error
+               | None ->
+                   Val(v1)
+               | Val(v) ->
+                   (case v1 of
+                       True ->
+                         Val(True)
+                     | False ->
+                         (case v of
+                             True ->
+                               Val(True)
+                           | False ->
+                               None))
+               | Node(t1,t2,t3,t4) ->
+                   Error)
+         | Node(q1,q2,q3,q4) ->
+             (case t3 of
+                 Error ->
+                   Error
+               | None ->
+                   Node(q1, q2, q3, q4)
+               | Val(v) ->
+                   Error
+               | Node(t1,t2,t3,t4) ->
+                   f'' q1 t1 q2 t2 q3 t3 q4 t4)),
+       (case q4 of
+           Error ->
+             Error
+         | None ->
+             t4
+         | Val(v1) ->
+             (case t4 of
+                 Error ->
+                   Error
+               | None ->
+                   Val(v1)
+               | Val(v) ->
+                   (case v1 of
+                       True ->
+                         Val(True)
+                     | False ->
+                         (case v of
+                             True ->
+                               Val(True)
+                           | False ->
+                               None))
+               | Node(t1,t2,t3,t4) ->
+                   Error)
+         | Node(q1,q2,q3,q4) ->
+             (case t4 of
+                 Error ->
+                   Error
+               | None ->
+                   Node(q1, q2, q3, q4)
+               | Val(v) ->
+                   Error
+               | Node(t1,t2,t3,t4) ->
+                   f'' q1 t1 q2 t2 q3 t3 q4 t4)));
+f' q1 t1 q2 t2 q3 t3 q4 t4 =
+  Node((case q1 of
+           Error ->
+             Error
+         | None ->
+             t1
+         | Val(v1) ->
+             (case t1 of
+                 Error ->
+                   Error
+               | None ->
+                   Val(v1)
+               | Val(v) ->
+                   (case v1 of
+                       True ->
+                         Val(True)
+                     | False ->
+                         (case v of
+                             True ->
+                               Val(True)
+                           | False ->
+                               None))
+               | Node(t1,t2,t3,t4) ->
+                   Error)
+         | Node(q1,q2,q3,q4) ->
+             (case t1 of
+                 Error ->
+                   Error
+               | None ->
+                   Node(q1, q2, q3, q4)
+               | Val(v) ->
+                   Error
+               | Node(t1,t2,t3,t4) ->
+                   f' q1 t1 q2 t2 q3 t3 q4 t4)),
+       (case q2 of
+           Error ->
+             Error
+         | None ->
+             t2
+         | Val(v1) ->
+             (case t2 of
+                 Error ->
+                   Error
+               | None ->
+                   Val(v1)
+               | Val(v) ->
+                   (case v1 of
+                       True ->
+                         Val(True)
+                     | False ->
+                         (case v of
+                             True ->
+                               Val(True)
+                           | False ->
+                               None))
+               | Node(t1,t2,t3,t4) ->
+                   Error)
+         | Node(q1,q2,q3,q4) ->
+             (case t2 of
+                 Error ->
+                   Error
+               | None ->
+                   Node(q1, q2, q3, q4)
+               | Val(v) ->
+                   Error
+               | Node(t1,t2,t3,t4) ->
+                   f' q1 t1 q2 t2 q3 t3 q4 t4)),
+       (case q3 of
+           Error ->
+             Error
+         | None ->
+             t3
+         | Val(v1) ->
+             (case t3 of
+                 Error ->
+                   Error
+               | None ->
+                   Val(v1)
+               | Val(v) ->
+                   (case v1 of
+                       True ->
+                         Val(True)
+                     | False ->
+                         (case v of
+                             True ->
+                               Val(True)
+                           | False ->
+                               None))
+               | Node(t1,t2,t3,t4) ->
+                   Error)
+         | Node(q1,q2,q3,q4) ->
+             (case t3 of
+                 Error ->
+                   Error
+               | None ->
+                   Node(q1, q2, q3, q4)
+               | Val(v) ->
+                   Error
+               | Node(t1,t2,t3,t4) ->
+                   f' q1 t1 q2 t2 q3 t3 q4 t4)),
+       (case q4 of
+           Error ->
+             Error
+         | None ->
+             t4
+         | Val(v1) ->
+             (case t4 of
+                 Error ->
+                   Error
+               | None ->
+                   Val(v1)
+               | Val(v) ->
+                   (case v1 of
+                       True ->
+                         Val(True)
+                     | False ->
+                         (case v of
+                             True ->
+                               Val(True)
+                           | False ->
+                               None))
+               | Node(t1,t2,t3,t4) ->
+                   Error)
+         | Node(q1,q2,q3,q4) ->
+             (case t4 of
+                 Error ->
+                   Error
+               | None ->
+                   Node(q1, q2, q3, q4)
+               | Val(v) ->
+                   Error
+               | Node(t1,t2,t3,t4) ->
+                   f' q1 t1 q2 t2 q3 t3 q4 t4)))
+
+
