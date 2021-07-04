@@ -3,6 +3,7 @@ Implementation of the distillation algorithm as described in the paper ["Distill
 
 The implementation can be built and executed using stack.
 
+## Execution 
 The execution is a REPL, with the prompt "POT> " and the following commands:
 
 ```
@@ -75,3 +76,12 @@ To quit from the program:
 ```
 POT> :quit
 ```
+
+## Experiments
+## Experiments
+
+| Function | Input | # of non-zero matrices  | Reductions (original/distilled)| Allocations (original/distilled)| Link |
+|----------|-------|-------------------------|----------------------|-----------------------|-----------------|
+| Kronecker with masking | -- | <img src="https://latex.codecogs.com/svg.latex?\Large&space;x=10^{2}" title="\Large"/> | 367868/67110 | 3974610/867137 | -- |
+| Multiple add |https://sparse.tamu.edu/Pajek/football, https://sparse.tamu.edu/Pajek/GD99_b, https://sparse.tamu.edu/Pajek/Cities |<img src="https://latex.codecogs.com/svg.latex?\Large&space;x=10^{1}" title="\Large"/>|17990/10520|2517/1979|-----------------|
+| -- | -- | -- | -- | -- | -- |
