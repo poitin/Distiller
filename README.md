@@ -78,7 +78,6 @@ POT> :quit
 ```
 
 ## Experiments
-## Experiments
 
 | Function | Input | # of non-zero matrices  | Reductions (original/distilled)| Allocations (original/distilled)| Link |
 |----------|-------|-------------------------|----------------------|-----------------------|-----------------|
