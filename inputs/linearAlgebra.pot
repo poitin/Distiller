@@ -2,7 +2,14 @@ import Bool
 
 main = 
 
-  kron isZ (or) (mask m1 msk) m2
+ -- OK
+ -- mask (mAdd isZ p m1 (transpose m2)) msk
+
+ -- OK
+ -- mAdd isZ p m (transpose m)  
+
+ -- It works, but result is not ID. Why? 
+ -- transpose (transpose m)
 
  -- ???
  -- mMult isZ f g m1 m2
@@ -223,3 +230,11 @@ fold f s m =
      | Error -> s
      | Val(v) -> (f s v)
      | Node (n1, n2, n3, n4) -> (fold f (fold f (fold f (fold f s n1) n2) n3) n4)
+;
+
+transpose m =
+    case m of
+      None -> m
+    | Error -> m
+    | Val (v) -> m
+    | Node (q1, q2, q3, q4) -> Node ((transpose q1), (transpose q3), (transpose q2), (transpose q4))
