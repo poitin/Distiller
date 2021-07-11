@@ -2,7 +2,7 @@ import Matrices
 import QTree
 import Bool
 
-main = f football_128 football_128 football_128;
+main = f m1 m2 m3;
 f m1 m2 m3 =
   (case m1 of
       Error ->

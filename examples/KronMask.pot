@@ -2,7 +2,7 @@ import Bool
 import QTree
 import Matrices
 
-main = kron isZ (or) (mask (tf11_2048) (triangle_2048)) (football_2048);
+main = kron isZ (or) (mask (m1) (msk)) (m2);
 
 isZ x = case x of
         True -> False

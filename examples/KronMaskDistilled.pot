@@ -2,7 +2,7 @@ import QTree
 import Bool
 import Matrices
 
-main = f triangle_2048 tf11_2048 football_2048 (or);
+main = f msk m1 m2 (or);
 f msk m1 m2 s =
   (case msk of
       MNone ->
