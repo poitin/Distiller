@@ -3,6 +3,9 @@ Implementation of the distillation algorithm as described in the paper ["Distill
 
 The implementation can be built and executed using stack.
 
+## Build status
+[![Build Status](https://travis-ci.org/YaccConstructor/LangToGroup.svg?branch=master)](https://travis-ci.org/github/YaccConstructor/Distiller)
+
 ## Execution 
 The execution is a REPL, with the prompt "POT> " and the following commands:
 
