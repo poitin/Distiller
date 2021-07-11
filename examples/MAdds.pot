@@ -2,7 +2,8 @@ import Bool
 import QTree
 import Matrices
 
-main = mAdd isZ (or) (mAdd isZ (or) (m2) (m3)) (m1);
+main = f football_128 football_128 football_128;
+f m1 m2 m3 = mAdd isZ (or) (mAdd isZ (or) (m1) (m2)) (m3);
 
 isZ x = case x of
         True -> False

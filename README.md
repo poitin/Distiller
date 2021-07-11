@@ -78,9 +78,28 @@ POT> :quit
 ```
 
 ## Experiments
+The following matrices were used in the experiments:
+| ID | Matrice |
+|----|---------|
+| 1 | https://sparse.tamu.edu/Pajek/football |
+| 2 | https://sparse.tamu.edu/Pajek/GD99_b |
+| 3 | https://sparse.tamu.edu/Pajek/Cities |
+| 4 | https://sparse.tamu.edu/JGD_Forest/TF11 |
+| 5 | https://sparse.tamu.edu/Pajek/GD96_a |
+|6 | https://sparse.tamu.edu/JGD_Homology|
+| 7 | triangle matrice |
+The next operations with free variables `m1`, `m2`, `m3`, `msk` and operators `mAdd`, `kron`, `mask` and were investigated:
+|Operation | Definition|
+|----------|-----------|
+| E-wise successive additions | `mAdd isZ (or) (mAdd isZ (or) (m2) (m3)) (m1)` |
+| Kronecker with masking | `kron isZ (or) (mask (m1) (msk)) (m2)` |
 
+The following metrics were obtained from experiments:
 | Function | Input | # of non-zero matrices  | Reductions (original/distilled)| Allocations (original/distilled)| Link |
 |----------|-------|-------------------------|----------------------|-----------------------|-----------------|
-| Kronecker with masking | -- | <img src="https://latex.codecogs.com/svg.latex?\Large&space;x=10^{2}" title="\Large"/> | 367868/67110 | 3974610/867137 | -- |
-| Multiple add |https://sparse.tamu.edu/Pajek/football, https://sparse.tamu.edu/Pajek/GD99_b, https://sparse.tamu.edu/Pajek/Cities |<img src="https://latex.codecogs.com/svg.latex?\Large&space;x=10^{2}" title="\Large"/>|17990/10520|2517/1979|-----------------|
-| -- | -- | -- | -- | -- | -- |
+| Kronecker with masking | (1), (2), (7) | 64 | 535125/367868 | 92470/67110 | - |
+| Kronecker with masking | (1), (4), (7) | 2048 | 1215051/827020 | 212133/151601 | - |
+| E-wise successive additions | (1), (2), (3) | 64 | 17990/10520 | 2517/1979 |-----------------|
+| E-wise successive additions | (1), (2) | 64 | 11904/6397 | 2007/1613 | -- |
+| E-wise successive additions | (6) | 128 |  16648/6464 |3170/1921 | -- |
+| E-wise successive additions | (2), (4) | 2048 | 106411/66272 | 11759/9849 | -- |

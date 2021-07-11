@@ -1,20 +1,20 @@
-import Bool
-import QTree
 import Matrices
+import QTree
+import Bool
 
-main = f m2 m3 m1;
-f m2 m3 m1 =
-  (case m2 of
+main = f football_128 football_128 football_128;
+f m1 m2 m3 =
+  (case m1 of
       Error ->
         Error
     | None ->
-        (case m3 of
+        (case m2 of
             Error ->
               Error
           | None ->
-              m1
+              m3
           | Val(v1) ->
-              (case m1 of
+              (case m3 of
                   Error ->
                     Error
                 | None ->
@@ -32,7 +32,7 @@ f m2 m3 m1 =
                 | Node(t1,t2,t3,t4) ->
                     Error)
           | Node(q1,q2,q3,q4) ->
-              (case m1 of
+              (case m3 of
                   Error ->
                     Error
                 | None ->
@@ -42,11 +42,11 @@ f m2 m3 m1 =
                 | Node(t1,t2,t3,t4) ->
                     f' q1 t1 q2 t2 q3 t3 q4 t4))
     | Val(v1) ->
-        (case m3 of
+        (case m2 of
             Error ->
               Error
           | None ->
-              (case m1 of
+              (case m3 of
                   Error ->
                     Error
                 | None ->
@@ -66,7 +66,7 @@ f m2 m3 m1 =
           | Val(v) ->
               (case v1 of
                   True ->
-                    (case m1 of
+                    (case m3 of
                         Error ->
                           Error
                       | None ->
@@ -78,7 +78,7 @@ f m2 m3 m1 =
                 | False ->
                     (case v of
                         True ->
-                          (case m1 of
+                          (case m3 of
                               Error ->
                                 Error
                             | None ->
@@ -88,15 +88,15 @@ f m2 m3 m1 =
                             | Node(t1,t2,t3,t4) ->
                                 Error)
                       | False ->
-                          m1))
+                          m3))
           | Node(t1,t2,t3,t4) ->
               Error)
     | Node(q1,q2,q3,q4) ->
-        (case m3 of
+        (case m2 of
             Error ->
               Error
           | None ->
-              (case m1 of
+              (case m3 of
                   Error ->
                     Error
                 | None ->
@@ -108,7 +108,7 @@ f m2 m3 m1 =
           | Val(v) ->
               Error
           | Node(t1,t2,t3,t4) ->
-              (case m1 of
+              (case m3 of
                   Error ->
                     Error
                 | None ->
