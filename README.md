@@ -3,9 +3,6 @@ Implementation of the distillation algorithm as described in the paper ["Distill
 
 The implementation can be built and executed using stack.
 
-## Build status
-[![Build Status](https://travis-ci.org/YaccConstructor/LangToGroup.svg?branch=master)](https://travis-ci.org/github/YaccConstructor/Distiller)
-
 ## Execution 
 The execution is a REPL, with the prompt "POT> " and the following commands:
 
@@ -83,15 +80,15 @@ POT> :quit
 ## Experiments
 Matrices used for experiments, stored in `Matrices.pot` file in special format and can be found via the [link](https://github.com/YaccConstructor/Distiller/blob/d2e813f844e61916007d45195abfd8ccfeb8fd67/examples/Matrices.pot#L7). 
 Links to original matrices definition are shown in the following table:
-| Matrice ID | Matrice |
-|----|---------|
-| 1 | https://sparse.tamu.edu/Pajek/football |
-| 2 | https://sparse.tamu.edu/Pajek/GD99_b |
-| 3 | https://sparse.tamu.edu/Pajek/Cities |
-| 4 | https://sparse.tamu.edu/JGD_Forest/TF11 |
-| 5 | https://sparse.tamu.edu/Pajek/GD96_a |
-|6 | https://sparse.tamu.edu/JGD_Homology|
-| 7 | [bottom triangle matrice with 2048 dimension](https://github.com/YaccConstructor/Distiller/blob/d2e813f844e61916007d45195abfd8ccfeb8fd67/examples/Matrices.pot#L33), [bottom triangle matrice with 64 dimension](https://github.com/YaccConstructor/Distiller/blob/d2e813f844e61916007d45195abfd8ccfeb8fd67/examples/Matrices.pot#L38)|
+| Matrix ID | Matrix | Number of non-zero elements |
+|----|---------|-----|
+| 1 | https://sparse.tamu.edu/Pajek/football | 118 |
+| 2 | https://sparse.tamu.edu/Pajek/GD99_b | 252 |
+| 3 | https://sparse.tamu.edu/Pajek/Cities | 1,342 |
+| 4 | https://sparse.tamu.edu/JGD_Forest/TF11 | 1,607 |
+| 5 | https://sparse.tamu.edu/Pajek/GD96_a | 1,677 |
+|6 | https://sparse.tamu.edu/JGD_Homology/n3c6-b1 | 210 |
+| 7 | [bottom triangle matrix with 2048 dimension](https://github.com/YaccConstructor/Distiller/blob/d2e813f844e61916007d45195abfd8ccfeb8fd67/examples/Matrices.pot#L33), [bottom triangle matrix with 64 dimension](https://github.com/YaccConstructor/Distiller/blob/d2e813f844e61916007d45195abfd8ccfeb8fd67/examples/Matrices.pot#L38)| -- |
 
 
 The next operations with free variables `m1`, `m2`, `m3`, `msk` and operators `mAdd`, `kron`, `mask` were investigated:
@@ -99,12 +96,15 @@ The next operations with free variables `m1`, `m2`, `m3`, `msk` and operators `m
 |----------|-----------|
 | E-wise successive additions | `mAdd isZ (or) (mAdd isZ (or) (m2) (m3)) (m1)` |
 | Kronecker with masking | `kron isZ (or) (mask (m1) (msk)) (m2)` |
+| Kronecker with masking* | `kron isZ (not) (mask (m1) (msk)) (m2)` |
 
 The following metrics were obtained from experiments:
-| Function | Input | # of non-zero matrices  | Reductions (original/distilled)| Allocations (original/distilled)| Link |
+| Function | Input | Dimension  | Reductions (original/distilled)| Allocations (original/distilled)| Link |
 |----------|-------|-------------------------|----------------------|-----------------------|-----------------|
 | Kronecker with masking | (1), (2), (7) | 64 | 535125/367868 | 92470/67110 | [Original program](https://github.com/YaccConstructor/Distiller/blob/fd3a8526362417c92b1cd24cd87b487b6ad6a6ae/examples/KronMask.pot#L5), [distilled program](https://github.com/YaccConstructor/Distiller/blob/fd3a8526362417c92b1cd24cd87b487b6ad6a6ae/examples/KronMaskDistilled.pot#L5)|
 | Kronecker with masking | (1), (4), (7) | 2048 | 1215051/827020 | 212133/151601 | [Original program](https://github.com/YaccConstructor/Distiller/blob/fd3a8526362417c92b1cd24cd87b487b6ad6a6ae/examples/KronMask.pot#L5), [distilled program](https://github.com/YaccConstructor/Distiller/blob/fd3a8526362417c92b1cd24cd87b487b6ad6a6ae/examples/KronMaskDistilled.pot#L5) |
+| Kronecker with masking* | (1), (2), (7) | 64 | - | - | [Original program](), [distilled program]()|
+| Kronecker with masking* | (1), (4), (7) | 2048 | - | - | [Original program](), [distilled program]() |
 | E-wise successive additions | (1), (2), (3) | 64 | 17990/10520 | 2517/1979 |[Original program](https://github.com/YaccConstructor/Distiller/blob/fd3a8526362417c92b1cd24cd87b487b6ad6a6ae/examples/MAdds.pot#L5), [distilled program](https://github.com/YaccConstructor/Distiller/blob/fd3a8526362417c92b1cd24cd87b487b6ad6a6ae/examples/MAddsDistilled.pot#L5)|
 | E-wise successive additions | (1), (2) | 64 | 11904/6397 | 2007/1613 |[Original program](https://github.com/YaccConstructor/Distiller/blob/fd3a8526362417c92b1cd24cd87b487b6ad6a6ae/examples/MAdds.pot#L5), [distilled program](https://github.com/YaccConstructor/Distiller/blob/fd3a8526362417c92b1cd24cd87b487b6ad6a6ae/examples/MAddsDistilled.pot#L5)|
 | E-wise successive additions | (6) | 128 |  16648/6464 |3170/1921 |[Original program](https://github.com/YaccConstructor/Distiller/blob/fd3a8526362417c92b1cd24cd87b487b6ad6a6ae/examples/MAdds.pot#L5), [distilled program](https://github.com/YaccConstructor/Distiller/blob/fd3a8526362417c92b1cd24cd87b487b6ad6a6ae/examples/MAddsDistilled.pot#L5)|
