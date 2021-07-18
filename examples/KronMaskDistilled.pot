@@ -2,7 +2,8 @@ import QTree
 import Bool
 import Matrices
 
-main = f msk m1 m2 (or);
+
+main = f msk m1 m2 (not);
 f msk m1 m2 s =
   (case msk of
       MNone ->

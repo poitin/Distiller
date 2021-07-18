@@ -2,10 +2,5 @@ import Bool
 import QTree
 import Matrices
 
-main = f m1 m2 m3;
-f m1 m2 m3 = mAdd isZ (or) (mAdd isZ (or) (m1) (m2)) (m3);
-
-isZ x = case x of
-        True -> False
-        | False -> True
+main = mAdd (not) (or) (mAdd (not) (or) (m1) (m2)) (m3)
 

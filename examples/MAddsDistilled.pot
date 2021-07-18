@@ -1,8 +1,8 @@
+import Bool
 import Matrices
 import QTree
-import Bool
 
-main = f m1 m2 m3;
+main = f (m1) (m2) (m3);
 f m1 m2 m3 =
   (case m1 of
       Error ->

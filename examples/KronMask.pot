@@ -2,9 +2,5 @@ import Bool
 import QTree
 import Matrices
 
-main = kron isZ (or) (mask (m1) (msk)) (m2);
-
-isZ x = case x of
-        True -> False
-        | False -> True
+main = kron (not) (or) (mask m1 msk) (m2)
 
