@@ -87,7 +87,7 @@ Links to original matrices definition are shown in the following table:
 | 3 | https://sparse.tamu.edu/Pajek/Cities | 1,342 |
 | 4 | https://sparse.tamu.edu/JGD_Forest/TF11 | 1,607 |
 | 5 | https://sparse.tamu.edu/Pajek/GD96_a | 1,677 |
-| 6 | [bottom triangle matrix with 2048 dimension](https://github.com/YaccConstructor/Distiller/blob/d2e813f844e61916007d45195abfd8ccfeb8fd67/examples/Matrices.pot#L33), [bottom triangle matrix with 64 dimension](https://github.com/YaccConstructor/Distiller/blob/d2e813f844e61916007d45195abfd8ccfeb8fd67/examples/Matrices.pot#L38)| -- |
+| 6 | [bottom triangle matrix with 2048 size](https://github.com/YaccConstructor/Distiller/blob/d2e813f844e61916007d45195abfd8ccfeb8fd67/examples/Matrices.pot#L33), [bottom triangle matrix with 64 size](https://github.com/YaccConstructor/Distiller/blob/d2e813f844e61916007d45195abfd8ccfeb8fd67/examples/Matrices.pot#L38)| -- |
 
 
 The next operations with free variables `m1`, `m2`, `m3`, `msk` and operators `mAdd`, `kron`, `mask` were investigated:
@@ -97,10 +97,10 @@ The next operations with free variables `m1`, `m2`, `m3`, `msk` and operators `m
 | Kronecker with masking | `kron (not) (or) (mask (m1) (msk)) (m2)` |
 
 The following metrics were obtained from experiments:
-| Function | Input | Dimension  | Reductions (original/distilled)| Allocations (original/distilled)| Link |
+| Function | Input | Size  | Reductions (original/distilled)| Allocations (original/distilled)| Link |
 |----------|-------|-------------------------|----------------------|-----------------------|-----------------|
-| Kronecker with masking | (1), (2), (7) | 64 | 535125/367868 | 92470/67110 | [Original program](https://github.com/YaccConstructor/Distiller/blob/3340108d7138d4f663d921f883e31b880107c677/examples/KronMask.pot#L5), [distilled program](https://github.com/YaccConstructor/Distiller/blob/3340108d7138d4f663d921f883e31b880107c677/examples/KronMaskDistilled.pot#L6)|
-| Kronecker with masking | (1), (4), (7) | 2048 | 1215051/827020 | 212133/151601 | [Original program](https://github.com/YaccConstructor/Distiller/blob/3340108d7138d4f663d921f883e31b880107c677/examples/KronMask.pot#L5), [distilled program](https://github.com/YaccConstructor/Distiller/blob/3340108d7138d4f663d921f883e31b880107c677/examples/KronMaskDistilled.pot#L6) |
+| Kronecker with masking | (1), (2), (6) | 64 | 535125/367868 | 92470/67110 | [Original program](https://github.com/YaccConstructor/Distiller/blob/3340108d7138d4f663d921f883e31b880107c677/examples/KronMask.pot#L5), [distilled program](https://github.com/YaccConstructor/Distiller/blob/3340108d7138d4f663d921f883e31b880107c677/examples/KronMaskDistilled.pot#L6)|
+| Kronecker with masking | (1), (4), (6) | 2048 | 1215051/827020 | 212133/151601 | [Original program](https://github.com/YaccConstructor/Distiller/blob/3340108d7138d4f663d921f883e31b880107c677/examples/KronMask.pot#L5), [distilled program](https://github.com/YaccConstructor/Distiller/blob/3340108d7138d4f663d921f883e31b880107c677/examples/KronMaskDistilled.pot#L6) |
 | E-wise successive additions | (1), (2), (3) | 64 | 20317/11459 | 3170/2372 |[Original program](https://github.com/YaccConstructor/Distiller/blob/3340108d7138d4f663d921f883e31b880107c677/examples/MAdds.pot#L5), [distilled program](https://github.com/YaccConstructor/Distiller/blob/3340108d7138d4f663d921f883e31b880107c677/examples/MAddsDistilled.pot#L5)|
 | E-wise successive additions | (1), (2) | 64 | 11900/5811 | 2007/1429 |[Original program](https://github.com/YaccConstructor/Distiller/blob/3340108d7138d4f663d921f883e31b880107c677/examples/MAdds.pot#L5), [distilled program](https://github.com/YaccConstructor/Distiller/blob/3340108d7138d4f663d921f883e31b880107c677/examples/MAddsDistilled.pot#L5)|
 | E-wise successive additions | (1) | 128 |  16644/6464 |3170/1921 |[Original program](https://github.com/YaccConstructor/Distiller/blob/3340108d7138d4f663d921f883e31b880107c677/examples/MAdds.pot#L5), [distilled program](https://github.com/YaccConstructor/Distiller/blob/3340108d7138d4f663d921f883e31b880107c677/examples/MAddsDistilled.pot#L5)|
