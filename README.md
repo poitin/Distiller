@@ -87,7 +87,7 @@ Links to original matrices definition are shown in the following table:
 | 3 | https://sparse.tamu.edu/Pajek/Cities | 1,342 |
 | 4 | https://sparse.tamu.edu/JGD_Forest/TF11 | 1,607 |
 | 5 | https://sparse.tamu.edu/Pajek/GD96_a | 1,677 |
-| 6 | [bottom triangle matrix with 2048 size](https://github.com/YaccConstructor/Distiller/blob/d2e813f844e61916007d45195abfd8ccfeb8fd67/examples/Matrices.pot#L33), [bottom triangle matrix with 64 size](https://github.com/YaccConstructor/Distiller/blob/d2e813f844e61916007d45195abfd8ccfeb8fd67/examples/Matrices.pot#L38)| -- |
+| 6 | [bottom triangle matrix of size 2048\*2048 ](https://github.com/YaccConstructor/Distiller/blob/d2e813f844e61916007d45195abfd8ccfeb8fd67/examples/Matrices.pot#L33), [bottom triangle matrix of size 64\*64](https://github.com/YaccConstructor/Distiller/blob/d2e813f844e61916007d45195abfd8ccfeb8fd67/examples/Matrices.pot#L38)| -- |
 
 
 The next operations with free variables `m1`, `m2`, `m3`, `msk` and operators `mAdd`, `kron`, `mask` were investigated:
