@@ -1,0 +1,6 @@
+import Bool
+import QTree
+import Matrices
+
+main = kron (not) (or) (mask m1 msk) (m2)
+
