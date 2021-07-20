@@ -2,8 +2,23 @@ import Bool
 
 main = 
 
+
+    maskFromMatrix
+    
+ -- Incorrect result  
+ -- complimentary (MNode (MVal, MNone, MVal, MNone))
+
+ -- Incorrect result
+ -- mask m (maskFromMatrix m)
+ 
+ -- Incorrect result
+ -- reduceMask (MNode (MVal,MVal,MVal,MVal))
+
  -- OK
  -- mask (mAdd isZ p m1 (transpose m2)) msk
+
+ -- OK
+ -- mAdd isZ p m (transpose (transpose m))
 
  -- OK
  -- mAdd isZ p m (transpose m)  
@@ -238,3 +253,53 @@ transpose m =
     | Error -> m
     | Val (v) -> m
     | Node (q1, q2, q3, q4) -> Node ((transpose q1), (transpose q3), (transpose q2), (transpose q4))
+
+;
+
+complimentary m =
+    let res = 
+        case m of 
+          MNode (m1, m2, m3, m4) -> MNode (complimentary m1, complimentary m2, complimentary m3, complimentary m4)
+        | MNone -> MVal
+        | MVal -> MNone
+    in reduceMask res
+
+;
+
+reduceMask m =
+    case m of
+       MVal -> MVal
+     | MNone -> MNone
+     | MNode (m1, m2, m3, m4) ->
+       (
+            let n1 = reduceMask m1 in
+            let n2 = reduceMask m2 in
+            let n3 = reduceMask m3 in
+            let n4 = reduceMask m4 in
+            let res = MNode (n1, n2, n3, n4) in
+            (case n1 of 
+               MVal -> (case n2 of
+                          MVal -> (case n3 of
+                                     MVal -> (case n4 of
+                                                MVal -> MVal
+                                              | MNone -> res
+                                              | MNode (l1,l2,l3,l4) -> res )
+                                     | MNone -> res
+                                     | MNode (l1,l2,l3,l4) -> res )
+                         | MNone -> res
+                         | MNode (l1,l2,l3,l4) -> res)
+               | MNone -> res
+               | MNode (l1,l2,l3,l4) -> res)
+       )
+;
+
+maskFromMatrix m =
+    let res = 
+        case m of
+          Error -> MNone
+        | Val (v) -> MVal
+        | None -> MNone
+        | Node (m1,m2,m3,m4) -> MNode (maskFromMatrix m1, maskFromMatrix m2, maskFromMatrix m3, maskFromMatrix m4)
+    in reduceMask res
+
+       
