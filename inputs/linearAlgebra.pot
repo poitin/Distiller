@@ -2,9 +2,17 @@ import Bool
 
 main = 
 
+    mEq
 
-    maskFromMatrix
-    
+ -- FAIL!!!
+ -- mEq (mAdd isZ1 p1 m3 m2) m1 opEq
+ 
+ -- SLOW / DIV
+ -- mEq m1 m1 opEq
+
+ -- SLOW / DIV
+ -- mEq m2 m1 opEq
+ 
  -- Incorrect result  
  -- complimentary (MNode (MVal, MNone, MVal, MNone))
 
@@ -301,5 +309,26 @@ maskFromMatrix m =
         | None -> MNone
         | Node (m1,m2,m3,m4) -> MNode (maskFromMatrix m1, maskFromMatrix m2, maskFromMatrix m3, maskFromMatrix m4)
     in reduceMask res
+;
 
-       
+mEq m1 m2 opEq =
+    case m1 of
+      Error -> False
+    | None -> ( case m2 of 
+                  None -> True
+                | Error -> False
+                | Val (v) -> False
+                | Node (n1,n2,n3,n4) -> False
+              )
+    | Val (v1) -> ( case m2 of 
+                      Val (v2) -> opEq v1 v2
+                    | Error -> False
+                    | None -> False
+                    | Node (n1,n2,n3,n4) -> False
+                  ) 
+    | Node (n1,n2,n3,n4) -> ( case m2 of 
+                                Node (l1,l2,l3,l4) -> and (mEq n1 l1 opEq) (and (mEq n2 l2 opEq) (and (mEq n3 l3 opEq) (mEq n4 l4 opEq)))
+                              | Error -> False
+                              | None -> False
+                              | Val (v2) -> False
+                            ) 
