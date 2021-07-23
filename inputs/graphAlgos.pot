@@ -1,0 +1,13 @@
+import linearAlgebra
+
+transitiveClosureSquared m isZ opM opAdd opEq =
+    let r = (mAdd isZ opAdd m (mMult isZ opM opAdd m m))
+    in (
+    case (nEq m r opEq) of
+      True -> r
+    | False -> transitiveClosureSquared r isZ opM opAdd opEq 
+    )
+;
+
+rpq graph query isZ opMult =
+    transitiveClosureSquared (map (not) (fT) (kron isZ opMult graph query)) (not) (and) (or) (and)

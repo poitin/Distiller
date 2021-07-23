@@ -1,8 +1,9 @@
 import Bool
 
 main = 
-
-    mEq
+ 
+ -- FAIL!!!
+ -- mEq
 
  -- FAIL!!!
  -- mEq (mAdd isZ1 p1 m3 m2) m1 opEq
