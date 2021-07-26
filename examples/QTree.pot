@@ -1,94 +1,5 @@
 import Bool
 
-main = 
-
-  kron isZ (or) (mask m1 msk) m2
-
- -- ???
- -- mMult isZ f g m1 m2
-
- -- SLOW / DIV
- -- mMult isZ1 p1 mlt m2 (mask m3 msk)
-
- -- OK
- -- (mAdd isZ1 p1 m2 (mask m3 msk))
-
- -- OK
- -- (mAdd isZ1 p1 (mask m3 msk) m2)
-
- -- OK
- -- mask (mAdd isZ1 p1 m2 m3) msk
- 
- -- OK 
- -- kron isZ p (mask m1 msk) m2 
-
- -- OK
- -- kron isZ p m2 (mask m1 msk)
-
- -- OK 
- -- mask (kron isZ1 p1 m2 m3) msk
-
- -- OK
- -- mAdd isZ2 p2 (mAdd isZ1 p1 m2 m3) m1
-
- -- OK but slow
- -- mAdd isZ2 p2 (mAdd isZ1 p1 m2 m3) (mAdd isZ2 p2 m1 m4)
- 
- -- OK but slow
- -- mAdd isZ2 p2 (kron isZ1 p1 m2 m3) (mAdd isZ2 p2 m1 m4)
-
- -- OK
- -- mask (mask m1 msk1) msk2
-
- -- OK
- -- eWizeScalarOp isZ g s2 (eWizeScalarOp isZ g s m)
- 
- -- OK
- -- eWizeScalarOp isZ1 g s2 (eWizeScalarOp isZ2 g2 s m)
-
- -- OK
- -- mAdd isZ1 p1 (kron isZ1 p1 m2 m3) m1
-
- -- OK
- -- map isZ fT (kron isZ op m1 m2)
-
- -- OK
- -- map isZ3 g (map isZ2 fT (kron isZ1 op m1 m2))
-
- -- OK
- -- map isZ f (mAdd isZ op m1 m2)
-
- -- DIV or SLOW
- -- fold or (False) (map isZ fT (kron isZ op m1 m2))
-
- -- OK
- -- mAdd isZ op m1 m1
-
- -- OK
- -- map isZ2 fT (kron isZ mlt m1 (Node ((Node (Val (x), None, Val (y), None)),
- --                                      None, 
- --                                      (Node (Val (a), Val (b), None, None)),
- --                                      (Node (None, None, None, Val (c)))))) 
-
- -- OK
- -- mAdd isZ pls   (kron isZ mlt m1 (Node ((Node (Val (x), None, Val (y), None)),
- --                                   None, 
- --                                   (Node (Val (a), Val (b), None, None)),
- --                                   (Node (None, None, None, Val (c)))))) 
- --                (kron isZ mlt m2 (Node ((Node (Val (x), None, Val (y), None)),
- --                                   None,
- --                                   (Node (Val (a), Val (b), None, None)),
- --                                   (Node (None, None, None, Val (c))))))
-
- -- OK
- -- mAdd isZ pls  (kron isZ mlt m1 (Node ((Node (Val (x), None, Val (y), None)),
- --                                   None, 
- --                                   (Node (Val (a), Val (b), None, None)),
- --                                   (Node (None, None, None, Val (c)))))) 
- --               m2
-
-;
-
 fT x = True;
 
 mkNode isZ x = case (isZ x) of True -> None | False -> Val(x); 
@@ -197,7 +108,7 @@ map isZ f m =
     case m of
          Error -> Error
          | None -> None
-         | Val (v) -> (mkNode isZ (f v))
+         | Val (v) -> (mkNode isZ (f s))
          | Node (q1, q2, q3, q4) -> (reduceTree 
                                      (map isZ f q1) 
                                      (map isZ f q2) 

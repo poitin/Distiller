@@ -1,0 +1,113 @@
+import Bool
+import QTree
+import Matrices
+
+main = f msk2 msk1 m1;
+f msk2 msk1 m1 =
+  (case msk2 of
+      MNone ->
+        None
+    | MVal ->
+        f' msk1 m1
+    | MNode(q1,q2,q3,q4) ->
+        (case msk1 of
+            MNone ->
+              None
+          | MVal ->
+              (case m1 of
+                  Error ->
+                    Error
+                | None ->
+                    None
+                | Val(v) ->
+                    Error
+                | Node(t1,t2,t3,t4) ->
+                    f'' q1 t1 q2 t2 q3 t3 q4 t4)
+          | MNode(q1',q2',q3',q4') ->
+              (case m1 of
+                  Error ->
+                    Error
+                | None ->
+                    None
+                | Val(v) ->
+                    Error
+                | Node(t1,t2,t3,t4) ->
+                    Node(f q1 q1' t1, f q2 q2' t2, f q3 q3' t3, f q4 q4' t4))));
+f'' q1 t1 q2 t2 q3 t3 q4 t4 =
+  Node((case q1 of
+           MNone ->
+             None
+         | MVal ->
+             t1
+         | MNode(q1,q2,q3,q4) ->
+             (case t1 of
+                 Error ->
+                   Error
+               | None ->
+                   None
+               | Val(v) ->
+                   Error
+               | Node(t1,t2,t3,t4) ->
+                   f'' q1 t1 q2 t2 q3 t3 q4 t4)),
+       (case q2 of
+           MNone ->
+             None
+         | MVal ->
+             t2
+         | MNode(q1,q2,q3,q4) ->
+             (case t2 of
+                 Error ->
+                   Error
+               | None ->
+                   None
+               | Val(v) ->
+                   Error
+               | Node(t1,t2,t3,t4) ->
+                   f'' q1 t1 q2 t2 q3 t3 q4 t4)),
+       (case q3 of
+           MNone ->
+             None
+         | MVal ->
+             t3
+         | MNode(q1,q2,q3,q4) ->
+             (case t3 of
+                 Error ->
+                   Error
+               | None ->
+                   None
+               | Val(v) ->
+                   Error
+               | Node(t1,t2,t3,t4) ->
+                   f'' q1 t1 q2 t2 q3 t3 q4 t4)),
+       (case q4 of
+           MNone ->
+             None
+         | MVal ->
+             t4
+         | MNode(q1,q2,q3,q4) ->
+             (case t4 of
+                 Error ->
+                   Error
+               | None ->
+                   None
+               | Val(v) ->
+                   Error
+               | Node(t1,t2,t3,t4) ->
+                   f'' q1 t1 q2 t2 q3 t3 q4 t4)));
+f' msk1 m1 =
+  (case msk1 of
+      MNone ->
+        None
+    | MVal ->
+        m1
+    | MNode(q1,q2,q3,q4) ->
+        (case m1 of
+            Error ->
+              Error
+          | None ->
+              None
+          | Val(v) ->
+              Error
+          | Node(t1,t2,t3,t4) ->
+              Node(f' q1 t1, f' q2 t2, f' q3 t3, f' q4 t4)))
+
