@@ -19,7 +19,7 @@ data Command = Load String
              | Prog
              | Term
              | Eval
-             | Distill
+             | Distill (Maybe String)
              | Quit
              | Help
              | Unknown
@@ -30,7 +30,8 @@ command str = let res = words str
                    [":prog"] -> Prog
                    [":term"] -> Term
                    [":eval"] -> Eval
-                   [":distill"] -> Distill
+                   [":distill"] -> Distill Nothing
+                   [":distill", f] -> Distill (Just f)
                    [":quit"] -> Quit
                    [":help"] -> Help
                    _ -> Unknown
@@ -39,7 +40,7 @@ helpMessage = "\n:load filename\t\tTo load the given filename\n"++
                ":prog\t\t\tTo print the current program\n"++
                ":term\t\t\tTo print the current term\n"++
                ":eval\t\t\tTo evaluate the current program\n"++
-               ":distill\t\tTo distill the current program\n"++
+               ":distill <filename>\t\tTo distill the current program. If the file name provided, the distillation result will be stored in the specified file.\n"++
                ":quit\t\t\tTo quit\n"++
                ":help\t\t\tTo print this message\n"
 
@@ -89,12 +90,15 @@ toplevel p = do putStr "POT> "
                                                                Left s -> do putStrLn ("Could not parse term: "++ show s)
                                                                             f (x:xs) t
                                                                Right u -> f xs (subst u (abstract t x))
-                   Distill -> case p of
-                                 Nothing -> do putStrLn "No program loaded"
-                                               toplevel p
-                                 Just (t,d) -> do let p' = dist (t,d)
-                                                  putStrLn (showProg p')
-                                                  toplevel (Just p')
+                   Distill f -> case p of
+                                     Nothing -> do putStrLn "No program loaded"
+                                                   toplevel p
+                                     Just (t,d) -> do let p' = dist (t,d)
+                                                      putStrLn (showProg p')
+                                                      case f of
+                                                           Nothing -> return ()
+                                                           Just f -> writeFile f (showProg p')  
+                                                      toplevel (Just p')
                    Quit -> return ()
                    Help -> do putStrLn helpMessage
                               toplevel p

@@ -1,0 +1,12 @@
+main = 
+-- FAIL
+ eWizeOp g1 (eWizeOp g1 m)
+ 
+ -- OK
+-- eWizeOp g (eWizeOp g2 m)
+;
+
+eWizeOp g m = 
+    case m of
+           Val (v1) -> (Val (g v1))
+         | Node (q1, q2) -> (Node ((eWizeOp g q1), (eWizeOp g q2)))

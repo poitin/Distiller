@@ -1,0 +1,6 @@
+import Bool
+import QTree
+import Matrices
+
+main = mAdd (not) (or) (mAdd (not) (or) (m1) (m2)) (m3)
+
