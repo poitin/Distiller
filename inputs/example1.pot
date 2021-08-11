@@ -1,0 +1,17 @@
+main = mOp op m;
+
+reduceTree n1 n2 =
+    let nd = (Node (n1, n2)) in
+    (case n1 of 
+          None -> (case n2 of 
+                        None -> None
+                        | Val (v1) -> nd
+                        | Node (m1, m2) -> nd)
+          | Val (v2) -> nd
+          | Node (l1, l2) -> nd);
+
+mOp g m = 
+    case m of         
+           None -> None
+         | Val (v1) -> (g v1)
+         | Node (q1, q2) -> (reduceTree (mOp g q1) (mOp g q2))
