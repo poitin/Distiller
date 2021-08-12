@@ -493,11 +493,11 @@ prettyTerm (Apply t u) = prettyTerm t <+> prettyAtom u
 prettyTerm (Fun f) = text f
 prettyTerm (Case t (b:bs)) = 
    parens $ hang (text "case" <+> prettyAtom t <+> text "of") 1 (blank <+> prettyBranch b $$ vcat (map ((text "|" <+>).prettyBranch) bs)) where
-   prettyBranch (c,[],t) = text c <+> text "->" $$ nest 2 (prettyTerm t)
+   prettyBranch (c,[],t) = text c <+> text "->" <+> prettyTerm t
    prettyBranch (c,xs,t) = let fv = renameVars (free t) xs
                                xs' = take (length xs) fv
                                t' = foldr concrete t xs'
-                           in  text c <> parens(hcat $ punctuate comma $ map text xs') <+> text "->" $$ nest 2 (prettyTerm t') $$ empty
+                           in  text c <> parens(hcat $ punctuate comma $ map text xs') <+> text "->" <+> prettyTerm t' $$ empty
 prettyTerm (Let x t u) = let x' = renameVar (free u) x
                          in  (text "let" <+> text x' <+> text "=" <+> prettyTerm t) $$ (text "in" <+> prettyTerm (concrete x' u))
 prettyTerm (Unfold l t u) = text "Unfold" <+> text l <+> prettyAtom t <+> text "=" <+> prettyTerm u
