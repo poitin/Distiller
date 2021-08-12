@@ -480,9 +480,9 @@ blank = P.space
 
 prettyCon t@(Con c ts)
    | isNat t   = int $ con2nat t
-   | isList t  = brackets $ sep $ punctuate comma $ map prettyTerm $ con2list t
+   | isList t  = brackets $ hcat $ punctuate comma $ map prettyTerm $ con2list t
    | null ts   = text c
-   | otherwise = text c <> parens (sep $ punctuate comma $ map prettyTerm ts)
+   | otherwise = text c <> parens (hcat $ punctuate comma $ map prettyTerm ts)
 
 prettyTerm (Free x) = text x
 prettyTerm (Bound i) = text "#" <> int i
@@ -492,12 +492,12 @@ prettyTerm t@(Con c ts) = prettyCon t
 prettyTerm (Apply t u) = prettyTerm t <+> prettyAtom u
 prettyTerm (Fun f) = text f
 prettyTerm (Case t (b:bs)) = 
-   parens $ hang (text "case" <+> prettyAtom t <+> text "of") 1 (blank <+> prettyBranch b $$ vcat (map ((text "|" <+>).prettyBranch) bs)) where
-   prettyBranch (c,[],t) = text c <+> text "->" <+> prettyTerm t
+   hang (text "case" <+> prettyAtom t <+> text "of") 1 (blank <+> prettyBranch b $$ vcat (map ((text "|" <+>).prettyBranch) bs)) where
+   prettyBranch (c,[],t) = text c <+> text "->" <+> prettyAtom t
    prettyBranch (c,xs,t) = let fv = renameVars (free t) xs
                                xs' = take (length xs) fv
                                t' = foldr concrete t xs'
-                           in  text c <> parens(hcat $ punctuate comma $ map text xs') <+> text "->" <+> prettyTerm t' $$ empty
+                           in  text c <> parens(hcat $ punctuate comma $ map text xs') <+> text "->" <+> prettyAtom t' $$ empty
 prettyTerm (Let x t u) = let x' = renameVar (free u) x
                          in  (text "let" <+> text x' <+> text "=" <+> prettyTerm t) $$ (text "in" <+> prettyTerm (concrete x' u))
 prettyTerm (Unfold l t u) = text "Unfold" <+> text l <+> prettyAtom t <+> text "=" <+> prettyTerm u
@@ -512,7 +512,7 @@ prettyProg (t,d) = let d' = [f | f <- d, fst f `elem` funs (t,d)]
                    in  prettyEnv (("main",([],t)):d')
 
 
-prettyEnv xs = vcat (punctuate semi $ map (\(f, (xs,t)) -> hang (text f <+> hsep (map text xs) <+> equals) 2 (prettyTerm (foldr concrete t xs))) xs)
+prettyEnv xs = vcat (punctuate semi $ map (\(f,(xs,t)) -> text f <+> hsep (map text xs) <+> equals <+> prettyTerm (foldr concrete t xs)) xs)
 
 isList (Con "Nil" []) = True
 isList (Con "Cons" [h,t]) = isList t
