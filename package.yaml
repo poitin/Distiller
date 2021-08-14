@@ -21,6 +21,11 @@ description:         Please see the README on GitHub at <https://github.com/poit
 
 dependencies:
 - base >= 4.7 && < 5
+- pretty
+- parsec
+- directory
+- process
+
 
 library:
   source-dirs: src
@@ -35,4 +40,19 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - distiller
+  
+tests:
+  distiller-test:
+    main:               Spec.hs
+    source-dirs:        test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - distiller
+    - HUnit
+    - test-framework
+    - test-framework-hunit
+  
 
