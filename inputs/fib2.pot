@@ -1,0 +1,9 @@
+main = fib n (\x -> x) (\y -> y);
+
+fib n f g = case n of
+               Zero    -> f 1
+             | Succ(n) -> case n of
+                             Zero -> g 1
+                           | Succ(n) -> fib n (\x -> f (g Succ(x))) (\y -> g (f (g Succ(Succ(y)))))
+
+

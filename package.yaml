@@ -4,7 +4,7 @@ github:              "poitin/distiller"
 license:             BSD3
 author:              "Geoff Hamilton"
 maintainer:          "geoffrey.hamilton@dcu.ie"
-copyright:           "2020 Geoff Hamilton"
+copyright:           "2021 Geoff Hamilton"
 
 extra-source-files:
 - README.md

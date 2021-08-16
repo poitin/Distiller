@@ -13,7 +13,7 @@ homepage:       https://github.com/poitin/distiller#readme
 bug-reports:    https://github.com/poitin/distiller/issues
 author:         Geoff Hamilton
 maintainer:     hamilton@computing.dcu.ie
-copyright:      2020 Geoff Hamilton
+copyright:      2021 Geoff Hamilton
 license:        BSD-3-Clause
 license-file:   LICENSE
 build-type:     Simple
