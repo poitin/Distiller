@@ -26,7 +26,6 @@ dependencies:
 - directory
 - process
 
-
 library:
   source-dirs: src
 
@@ -54,5 +53,4 @@ tests:
     - HUnit
     - test-framework
     - test-framework-hunit
-  
-
+    
