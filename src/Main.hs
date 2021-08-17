@@ -15,7 +15,7 @@ import Data.List
 import System.Exit
 import System.Process
 
-data Command = Load String String
+data Command = Load String (Maybe String)
              | Prog
              | Term
              | Eval
@@ -26,7 +26,8 @@ data Command = Load String String
 
 command str = let res = words str
               in case res of
-                   [":load",f, sourcesDir] -> Load f sourcesDir
+                   [":load",f] -> Load f (Nothing)
+                   [":load",f, sourceDir] -> Load f (Just sourceDir)
                    [":prog"] -> Prog
                    [":term"] -> Term
                    [":eval"] -> Eval
@@ -36,7 +37,7 @@ command str = let res = words str
                    [":help"] -> Help
                    _ -> Unknown
 
-helpMessage = "\n:load filename\t\tTo load the given filename\n"++
+helpMessage = "\n:load filename directory\t\tTo load the given filename with imports stored in directory\n"++
                ":prog\t\t\tTo print the current program\n"++
                ":term\t\t\tTo print the current term\n"++
                ":eval\t\t\tTo evaluate the current program\n"++
@@ -59,10 +60,17 @@ toplevel p = do putStr "POT> "
                              g [] ys d = toplevel (Just (makeProg d))
                              g (x:xs) ys d = if   x `elem` ys
                                              then g xs ys d
-                                             else do r <- loadFile (sourcesDir ++ x)
+                                             else case sourcesDir of 
+                                               Nothing -> do
+                                                     r <- loadFile x
                                                      case r of
                                                         Nothing -> toplevel Nothing
                                                         Just (fs,d') -> g (xs++fs) (x:ys) (d++d')
+                                               Just sourcesDir' -> do
+                                                     r <- loadFile (sourcesDir' ++ x)
+                                                     case r of
+                                                        Nothing -> toplevel Nothing
+                                                        Just (fs,d') -> g (xs++fs) (x:ys) (d++d')          
                    Prog -> case p of
                               Nothing -> do putStrLn "No program loaded"
                                             toplevel p
