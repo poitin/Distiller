@@ -15,7 +15,7 @@ import Data.List
 import System.Exit
 import System.Process
 
-data Command = Load String
+data Command = Load String String
              | Prog
              | Term
              | Eval
@@ -26,7 +26,7 @@ data Command = Load String
 
 command str = let res = words str
               in case res of
-                   [":load",f] -> Load f
+                   [":load",f, sourcesDir] -> Load f sourcesDir
                    [":prog"] -> Prog
                    [":term"] -> Term
                    [":eval"] -> Eval
@@ -54,12 +54,12 @@ toplevel p = do putStr "POT> "
                 hFlush stdout
                 x <-  getLine
                 case command x of
-                   Load f -> g [f] [] []
+                   Load f sourcesDir -> g [f] [] []
                              where
                              g [] ys d = toplevel (Just (makeProg d))
                              g (x:xs) ys d = if   x `elem` ys
                                              then g xs ys d
-                                             else do r <- loadFile x
+                                             else do r <- loadFile (sourcesDir ++ x)
                                                      case r of
                                                         Nothing -> toplevel Nothing
                                                         Just (fs,d') -> g (xs++fs) (x:ys) (d++d')
