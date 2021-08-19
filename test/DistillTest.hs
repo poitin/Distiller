@@ -1,8 +1,4 @@
-module EvalTest where
+module DistillTest where
 
 import Test.HUnit
 import Term
-
-
-eval1Test :: Test
-eval1Test = 
