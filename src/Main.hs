@@ -55,22 +55,9 @@ toplevel p = do putStr "POT> "
                 hFlush stdout
                 x <-  getLine
                 case command x of
-                   Load f sourcesDir -> g [f] [] []
-                             where
-                             g [] ys d = toplevel (Just (makeProg d))
-                             g (x:xs) ys d = if   x `elem` ys
-                                             then g xs ys d
-                                             else case sourcesDir of 
-                                               Nothing -> do
-                                                     r <- loadFile x
-                                                     case r of
-                                                        Nothing -> toplevel Nothing
-                                                        Just (fs,d') -> g (xs++fs) (x:ys) (d++d')
-                                               Just sourcesDir' -> do
-                                                     r <- loadFile (sourcesDir' ++ x)
-                                                     case r of
-                                                        Nothing -> toplevel Nothing
-                                                        Just (fs,d') -> g (xs++fs) (x:ys) (d++d')          
+                   Load f sourcesDir -> do
+                     prog <- loadProg [f] [] [] sourcesDir
+                     toplevel prog
                    Prog -> case p of
                               Nothing -> do putStrLn "No program loaded"
                                             toplevel p
@@ -84,20 +71,12 @@ toplevel p = do putStr "POT> "
                    Eval -> case p of
                               Nothing -> do putStrLn "No program loaded"
                                             toplevel p
-                              Just (t,d) -> f (free t) t
-                                            where
-                                            f [] t = do let (v,r,a) = eval t EmptyCtx d 0 0
-                                                        print v
-                                                        putStrLn ("Reductions: " ++ show r)
-                                                        putStrLn ("Allocations: " ++ show a)
-                                                        toplevel p
-                                            f (x:xs) t = do putStr (x++" = ")
-                                                            hFlush stdout
-                                                            l <-  getLine
-                                                            case parseTerm l of
-                                                               Left s -> do putStrLn ("Could not parse term: "++ show s)
-                                                                            f (x:xs) t
-                                                               Right u -> f xs (subst u (abstract t x))
+                              Just (t,d) -> do 
+                                (v, r, a) <- evalProg (free t) t d
+                                print v
+                                putStrLn ("Reductions: " ++ show r)
+                                putStrLn ("Allocations: " ++ show a)
+                                toplevel p
                    Distill f -> case p of
                                      Nothing -> do putStrLn "No program loaded"
                                                    toplevel p
@@ -113,8 +92,36 @@ toplevel p = do putStr "POT> "
                    Unknown -> do putStrLn "Err: Could not parse command, type ':help' for a list of commands"
                                  toplevel p
 
-loadFile :: String -> IO (Maybe ([String],[(String,([String],Term))]))
+evalProg :: (Num c, Foldable t) => [[Char]] -> Term -> [(String, (t String, Term))] -> IO (Term, Int, c)
+evalProg [] t d = do let (v,r,a) = eval t EmptyCtx d 0 0
+                     return (v, r, a)
+evalProg (x:xs) t d = do putStr (x++" = ")
+                         hFlush stdout
+                         l <-  getLine
+                         case parseTerm l of
+                            Left s -> do putStrLn ("Could not parse term: "++ show s)
+                                         evalProg (x:xs) t d
+                            Right u -> evalProg xs (subst u (abstract t x)) d
 
+
+loadProg :: [[Char]] -> [[Char]] -> [(String, ([String], Term))] -> Maybe [Char] -> IO (Maybe (Term, [([Char], ([String], Term))]))
+loadProg [] _ d _ = return (Just (makeProg d))
+loadProg (x:xs) ys d sourcesDir = do
+  if  x `elem` ys
+    then loadProg xs ys d sourcesDir
+    else case sourcesDir of
+        Nothing -> do
+              r <- loadFile x
+              case r of
+                  Nothing -> return Nothing
+                  Just (fs,d') -> loadProg (xs++fs) (x:ys) (d++d') sourcesDir
+        Just sourcesDir' -> do
+              r <- loadFile (sourcesDir' ++ x)
+              case r of
+                 Nothing -> return Nothing
+                 Just (fs,d') -> loadProg (xs++fs) (x:ys) (d++d') sourcesDir
+
+loadFile :: String -> IO (Maybe ([String],[(String,([String],Term))]))
 loadFile f = do x <-  doesFileExist (f++".pot")
                 if   x
                      then do putStrLn ("Loading file: "++f++".pot")
