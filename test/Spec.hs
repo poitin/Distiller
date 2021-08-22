@@ -1,4 +1,5 @@
 import EvalTest
+import DistillTest
 
 import Test.HUnit
 import Test.Framework
@@ -6,5 +7,7 @@ import Test.Framework.Providers.HUnit
 
 main :: IO ()
 main = do
-    tests <- EvalTest.eval1Test 
-    defaultMainWithOpts (hUnitTestToTests tests) mempty
+    evalTests <- EvalTest.eval1Test
+    distillTests <- DistillTest.distill1Test
+    let distillEvalTests = []
+    defaultMainWithOpts (hUnitTestToTests $ TestList $ evalTests : distillTests : distillEvalTests) mempty
