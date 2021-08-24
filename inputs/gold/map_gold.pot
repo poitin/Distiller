@@ -1,0 +1,4 @@
+main = fix me;
+map f l = case l of
+             Nil -> []
+           | Cons(hd,tl) -> Cons(f hd,map f tl)
