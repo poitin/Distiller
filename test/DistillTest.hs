@@ -1,4 +1,4 @@
-module DistillTest (distillerTests) where
+module DistillTest (distillerBasicTests, distillerLinearAlgebraTests) where
 
 import Helpers
 import Test.HUnit
@@ -7,7 +7,7 @@ import Trans (dist)
 import System.Timeout
 import Data.List
 
-defaultTimeout = 10 * 1000000
+defaultTimeout = 10
 
 load root imports =
   do s <- loadProg [root] [] [] $ Just imports
@@ -28,10 +28,22 @@ createDistillationTest fileToDistill importsForDistill fileWithGold importsForGo
       return $ TestCase $ assertEqual ("Distilled program for " ++ fileToDistill ++ " should be equals to " ++ fileWithGold ++ ".") expected (expected `intersect` actual) 
 
 
-distillerTests :: IO Test
-distillerTests = do 
+distillerBasicTests :: IO Test
+distillerBasicTests = do 
   test1 <- createDistillationTest "test1" "examples/" "test1_gold" "examples/" defaultTimeout
   testAppApp <- createDistillationTest "appapp" "inputs/" "gold/appapp_gold" "inputs/" defaultTimeout
   testMap <- createDistillationTest "map" "inputs/" "gold/map_gold" "inputs/" defaultTimeout
   
-  return $ TestList [test1, testAppApp, testMap]
+  return $ TestList [TestLabel "test1" test1, TestLabel "appapp" testAppApp, TestLabel "map" testMap]
+
+distillerLinearAlgebraTests :: IO Test
+distillerLinearAlgebraTests = do 
+  addAddTest <- createDistillationTest "linearAlgebraTests/addadd" "inputs/" "gold/linearAlgebra/addadd_gold" "inputs/" defaultTimeout  
+  addMaskTest <- createDistillationTest "linearAlgebraTests/addmask" "inputs/" "gold/linearAlgebra/addmask_gold" "inputs/" defaultTimeout  
+  multMaskTest <- createDistillationTest "linearAlgebraTests/multmask" "inputs/" "gold/linearAlgebra/multmask_gold" "inputs/" defaultTimeout  
+  kronMaskTest <- createDistillationTest "linearAlgebraTests/kronmask" "inputs/" "gold/linearAlgebra/kronmask_gold" "inputs/" defaultTimeout  
+  
+  return $ TestList [TestLabel "LinAl AddAdd" addAddTest, 
+                     TestLabel "LinAl AddMask" addMaskTest, 
+                     TestLabel "LinAl MultMask" multMaskTest, 
+                     TestLabel "LinAl KronMask" kronMaskTest]

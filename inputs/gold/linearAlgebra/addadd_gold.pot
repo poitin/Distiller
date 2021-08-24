@@ -1,0 +1,232 @@
+main = case m1 of
+          Error -> Error
+        | None -> (f m2 m3 isZ p)
+        | Val(v1) -> (case m2 of
+                         Error -> Error
+                       | None -> (case m3 of
+                                     Error -> Error
+                                   | None -> Val(v1)
+                                   | Val(v) -> (case (isZ (p v1 v)) of
+                                                   True -> None
+                                                 | False -> Val(p v1 v))
+                                   | Node(t1,t2,t3,t4) -> Error)
+                       | Val(v1') -> (case m3 of
+                                         Error -> Error
+                                       | None -> (case (isZ (p v1 v1')) of
+                                                     True -> None
+                                                   | False -> Val(p v1 v1'))
+                                       | Val(v) -> (case (isZ (p v1' v)) of
+                                                       True -> Val(v1)
+                                                     | False -> (case (isZ (p v1 (p v1' v))) of
+                                                                    True -> None
+                                                                  | False -> Val(p v1 (p v1' v))))
+                                       | Node(t1,t2,t3,t4) -> Error)
+                       | Node(q1,q2,q3,q4) -> (case m3 of
+                                                  Error -> Error
+                                                | None -> Error
+                                                | Val(v) -> Error
+                                                | Node(t1,t2,t3,t4) -> Error))
+        | Node(q1,q2,q3,q4) -> (f' m2 m3 q1 q2 q3 q4 isZ p);
+f' m2 m3 q1 q2 q3 q4 isZ p = case m2 of
+                                Error -> Error
+                              | None -> (case m3 of
+                                            Error -> Error
+                                          | None -> Node(q1,q2,q3,q4)
+                                          | Val(v) -> Error
+                                          | Node(t1,t2,t3,t4) -> (f'' q1 t1 isZ p q2 t2 q3 t3 q4 t4))
+                              | Val(v1) -> (case m3 of
+                                               Error -> Error
+                                             | None -> Error
+                                             | Val(v) -> (case (isZ (p v1 v)) of
+                                                             True -> Node(q1,q2,q3,q4)
+                                                           | False -> Error)
+                                             | Node(t1,t2,t3,t4) -> Error)
+                              | Node(q1',q2',q3',q4') -> (case m3 of
+                                                             Error -> Error
+                                                           | None -> (f'' q1 q1' isZ p q2 q2' q3 q3' q4 q4')
+                                                           | Val(v) -> Error
+                                                           | Node(t1,t2,t3,t4) -> Node(case q1 of
+                                                                                          Error -> Error
+                                                                                        | None -> (f q1' t1 isZ p)
+                                                                                        | Val(v1) -> (case q1' of
+                                                                                                         Error -> Error
+                                                                                                       | None -> (case t1 of
+                                                                                                                     Error -> Error
+                                                                                                                   | None -> Val(v1)
+                                                                                                                   | Val(v) -> (case (isZ (p v1 v)) of
+                                                                                                                                   True -> None
+                                                                                                                                 | False -> Val(p v1 v))
+                                                                                                                   | Node(t1,t2,t3,t4) -> Error)
+                                                                                                       | Val(v1') -> (case t1 of
+                                                                                                                         Error -> Error
+                                                                                                                       | None -> (case (isZ (p v1 v1')) of
+                                                                                                                                     True -> None
+                                                                                                                                   | False -> Val(p v1 v1'))
+                                                                                                                       | Val(v) -> (case (isZ (p v1' v)) of
+                                                                                                                                       True -> Val(v1)
+                                                                                                                                     | False -> (case (isZ (p v1 (p v1' v))) of
+                                                                                                                                                    True -> None
+                                                                                                                                                  | False -> Val(p v1 (p v1' v))))
+                                                                                                                       | Node(t1,t2,t3,t4) -> Error)
+                                                                                                       | Node(q1,q2,q3,q4) -> (case t1 of
+                                                                                                                                  Error -> Error
+                                                                                                                                | None -> Error
+                                                                                                                                | Val(v) -> Error
+                                                                                                                                | Node(t1,t2,t3,t4) -> Error))
+                                                                                        | Node(q1,q2,q3,q4) -> (f' q1' t1 q1 q2 q3 q4 isZ p),case q2 of
+                                                                                                                                                Error -> Error
+                                                                                                                                              | None -> (f q2' t2 isZ p)
+                                                                                                                                              | Val(v1) -> (case q2' of
+                                                                                                                                                               Error -> Error
+                                                                                                                                                             | None -> (case t2 of
+                                                                                                                                                                           Error -> Error
+                                                                                                                                                                         | None -> Val(v1)
+                                                                                                                                                                         | Val(v) -> (case (isZ (p v1 v)) of
+                                                                                                                                                                                         True -> None
+                                                                                                                                                                                       | False -> Val(p v1 v))
+                                                                                                                                                                         | Node(t1,t2,t3,t4) -> Error)
+                                                                                                                                                             | Val(v1') -> (case t2 of
+                                                                                                                                                                               Error -> Error
+                                                                                                                                                                             | None -> (case (isZ (p v1 v1')) of
+                                                                                                                                                                                           True -> None
+                                                                                                                                                                                         | False -> Val(p v1 v1'))
+                                                                                                                                                                             | Val(v) -> (case (isZ (p v1' v)) of
+                                                                                                                                                                                             True -> Val(v1)
+                                                                                                                                                                                           | False -> (case (isZ (p v1 (p v1' v))) of
+                                                                                                                                                                                                          True -> None
+                                                                                                                                                                                                        | False -> Val(p v1 (p v1' v))))
+                                                                                                                                                                             | Node(t1,t2,t3,t4) -> Error)
+                                                                                                                                                             | Node(q1,q2,q3,q4) -> (case t2 of
+                                                                                                                                                                                        Error -> Error
+                                                                                                                                                                                      | None -> Error
+                                                                                                                                                                                      | Val(v) -> Error
+                                                                                                                                                                                      | Node(t1,t2,t3,t4) -> Error))
+                                                                                                                                              | Node(q1,q2,q3,q4) -> (f' q2' t2 q1 q2 q3 q4 isZ p),case q3 of
+                                                                                                                                                                                                      Error -> Error
+                                                                                                                                                                                                    | None -> (f q3' t3 isZ p)
+                                                                                                                                                                                                    | Val(v1) -> (case q3' of
+                                                                                                                                                                                                                     Error -> Error
+                                                                                                                                                                                                                   | None -> (case t3 of
+                                                                                                                                                                                                                                 Error -> Error
+                                                                                                                                                                                                                               | None -> Val(v1)
+                                                                                                                                                                                                                               | Val(v) -> (case (isZ (p v1 v)) of
+                                                                                                                                                                                                                                               True -> None
+                                                                                                                                                                                                                                             | False -> Val(p v1 v))
+                                                                                                                                                                                                                               | Node(t1,t2,t3,t4) -> Error)
+                                                                                                                                                                                                                   | Val(v1') -> (case t3 of
+                                                                                                                                                                                                                                     Error -> Error
+                                                                                                                                                                                                                                   | None -> (case (isZ (p v1 v1')) of
+                                                                                                                                                                                                                                                 True -> None
+                                                                                                                                                                                                                                               | False -> Val(p v1 v1'))
+                                                                                                                                                                                                                                   | Val(v) -> (case (isZ (p v1' v)) of
+                                                                                                                                                                                                                                                   True -> Val(v1)
+                                                                                                                                                                                                                                                 | False -> (case (isZ (p v1 (p v1' v))) of
+                                                                                                                                                                                                                                                                True -> None
+                                                                                                                                                                                                                                                              | False -> Val(p v1 (p v1' v))))
+                                                                                                                                                                                                                                   | Node(t1,t2,t3,t4) -> Error)
+                                                                                                                                                                                                                   | Node(q1,q2,q3,q4) -> (case t3 of
+                                                                                                                                                                                                                                              Error -> Error
+                                                                                                                                                                                                                                            | None -> Error
+                                                                                                                                                                                                                                            | Val(v) -> Error
+                                                                                                                                                                                                                                            | Node(t1,t2,t3,t4) -> Error))
+                                                                                                                                                                                                    | Node(q1,q2,q3,q4) -> (f' q3' t3 q1 q2 q3 q4 isZ p),case q4 of
+                                                                                                                                                                                                                                                            Error -> Error
+                                                                                                                                                                                                                                                          | None -> (f q4' t4 isZ p)
+                                                                                                                                                                                                                                                          | Val(v1) -> (case q4' of
+                                                                                                                                                                                                                                                                           Error -> Error
+                                                                                                                                                                                                                                                                         | None -> (case t4 of
+                                                                                                                                                                                                                                                                                       Error -> Error
+                                                                                                                                                                                                                                                                                     | None -> Val(v1)
+                                                                                                                                                                                                                                                                                     | Val(v) -> (case (isZ (p v1 v)) of
+                                                                                                                                                                                                                                                                                                     True -> None
+                                                                                                                                                                                                                                                                                                   | False -> Val(p v1 v))
+                                                                                                                                                                                                                                                                                     | Node(t1,t2,t3,t4) -> Error)
+                                                                                                                                                                                                                                                                         | Val(v1') -> (case t4 of
+                                                                                                                                                                                                                                                                                           Error -> Error
+                                                                                                                                                                                                                                                                                         | None -> (case (isZ (p v1 v1')) of
+                                                                                                                                                                                                                                                                                                       True -> None
+                                                                                                                                                                                                                                                                                                     | False -> Val(p v1 v1'))
+                                                                                                                                                                                                                                                                                         | Val(v) -> (case (isZ (p v1' v)) of
+                                                                                                                                                                                                                                                                                                         True -> Val(v1)
+                                                                                                                                                                                                                                                                                                       | False -> (case (isZ (p v1 (p v1' v))) of
+                                                                                                                                                                                                                                                                                                                      True -> None
+                                                                                                                                                                                                                                                                                                                    | False -> Val(p v1 (p v1' v))))
+                                                                                                                                                                                                                                                                                         | Node(t1,t2,t3,t4) -> Error)
+                                                                                                                                                                                                                                                                         | Node(q1,q2,q3,q4) -> (case t4 of
+                                                                                                                                                                                                                                                                                                    Error -> Error
+                                                                                                                                                                                                                                                                                                  | None -> Error
+                                                                                                                                                                                                                                                                                                  | Val(v) -> Error
+                                                                                                                                                                                                                                                                                                  | Node(t1,t2,t3,t4) -> Error))
+                                                                                                                                                                                                                                                          | Node(q1,q2,q3,q4) -> (f' q4' t4 q1 q2 q3 q4 isZ p)));
+f'' q1 t1 isZ p q2 t2 q3 t3 q4 t4 = Node(case q1 of
+                                            Error -> Error
+                                          | None -> t1
+                                          | Val(v1) -> (case t1 of
+                                                           Error -> Error
+                                                         | None -> Val(v1)
+                                                         | Val(v) -> (case (isZ (p v1 v)) of
+                                                                         True -> None
+                                                                       | False -> Val(p v1 v))
+                                                         | Node(t1,t2,t3,t4) -> Error)
+                                          | Node(q1,q2,q3,q4) -> (case t1 of
+                                                                     Error -> Error
+                                                                   | None -> Node(q1,q2,q3,q4)
+                                                                   | Val(v) -> Error
+                                                                   | Node(t1,t2,t3,t4) -> (f'' q1 t1 isZ p q2 t2 q3 t3 q4 t4)),case q2 of
+                                                                                                                                  Error -> Error
+                                                                                                                                | None -> t2
+                                                                                                                                | Val(v1) -> (case t2 of
+                                                                                                                                                 Error -> Error
+                                                                                                                                               | None -> Val(v1)
+                                                                                                                                               | Val(v) -> (case (isZ (p v1 v)) of
+                                                                                                                                                               True -> None
+                                                                                                                                                             | False -> Val(p v1 v))
+                                                                                                                                               | Node(t1,t2,t3,t4) -> Error)
+                                                                                                                                | Node(q1,q2,q3,q4) -> (case t2 of
+                                                                                                                                                           Error -> Error
+                                                                                                                                                         | None -> Node(q1,q2,q3,q4)
+                                                                                                                                                         | Val(v) -> Error
+                                                                                                                                                         | Node(t1,t2,t3,t4) -> (f'' q1 t1 isZ p q2 t2 q3 t3 q4 t4)),case q3 of
+                                                                                                                                                                                                                        Error -> Error
+                                                                                                                                                                                                                      | None -> t3
+                                                                                                                                                                                                                      | Val(v1) -> (case t3 of
+                                                                                                                                                                                                                                       Error -> Error
+                                                                                                                                                                                                                                     | None -> Val(v1)
+                                                                                                                                                                                                                                     | Val(v) -> (case (isZ (p v1 v)) of
+                                                                                                                                                                                                                                                     True -> None
+                                                                                                                                                                                                                                                   | False -> Val(p v1 v))
+                                                                                                                                                                                                                                     | Node(t1,t2,t3,t4) -> Error)
+                                                                                                                                                                                                                      | Node(q1,q2,q3,q4) -> (case t3 of
+                                                                                                                                                                                                                                                 Error -> Error
+                                                                                                                                                                                                                                               | None -> Node(q1,q2,q3,q4)
+                                                                                                                                                                                                                                               | Val(v) -> Error
+                                                                                                                                                                                                                                               | Node(t1,t2,t3,t4) -> (f'' q1 t1 isZ p q2 t2 q3 t3 q4 t4)),case q4 of
+                                                                                                                                                                                                                                                                                                              Error -> Error
+                                                                                                                                                                                                                                                                                                            | None -> t4
+                                                                                                                                                                                                                                                                                                            | Val(v1) -> (case t4 of
+                                                                                                                                                                                                                                                                                                                             Error -> Error
+                                                                                                                                                                                                                                                                                                                           | None -> Val(v1)
+                                                                                                                                                                                                                                                                                                                           | Val(v) -> (case (isZ (p v1 v)) of
+                                                                                                                                                                                                                                                                                                                                           True -> None
+                                                                                                                                                                                                                                                                                                                                         | False -> Val(p v1 v))
+                                                                                                                                                                                                                                                                                                                           | Node(t1,t2,t3,t4) -> Error)
+                                                                                                                                                                                                                                                                                                            | Node(q1,q2,q3,q4) -> (case t4 of
+                                                                                                                                                                                                                                                                                                                                       Error -> Error
+                                                                                                                                                                                                                                                                                                                                     | None -> Node(q1,q2,q3,q4)
+                                                                                                                                                                                                                                                                                                                                     | Val(v) -> Error
+                                                                                                                                                                                                                                                                                                                                     | Node(t1,t2,t3,t4) -> (f'' q1 t1 isZ p q2 t2 q3 t3 q4 t4)));
+f m2 m3 isZ p = case m2 of
+                   Error -> Error
+                 | None -> m3
+                 | Val(v1) -> (case m3 of
+                                  Error -> Error
+                                | None -> Val(v1)
+                                | Val(v) -> (case (isZ (p v1 v)) of
+                                                True -> None
+                                              | False -> Val(p v1 v))
+                                | Node(t1,t2,t3,t4) -> Error)
+                 | Node(q1,q2,q3,q4) -> (case m3 of
+                                            Error -> Error
+                                          | None -> Node(q1,q2,q3,q4)
+                                          | Val(v) -> Error
+                                          | Node(t1,t2,t3,t4) -> Node(f q1 t1 isZ p,f q2 t2 isZ p,f q3 t3 isZ p,f q4 t4 isZ p))

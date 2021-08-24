@@ -8,6 +8,7 @@ import Test.Framework.Providers.HUnit
 main :: IO ()
 main = do
     evalTests <- EvalTest.eval1Test
-    distillTests <- DistillTest.distillerTests
+    distilledBasicTests <- DistillTest.distillerBasicTests
+    distilledLinearAlgebraTests <- DistillTest.distillerLinearAlgebraTests
     let distillEvalTests = []
-    defaultMainWithOpts (hUnitTestToTests $ TestList $ evalTests : distillTests : distillEvalTests) mempty
+    defaultMainWithOpts (hUnitTestToTests $ TestList $ evalTests : distilledBasicTests : distilledLinearAlgebraTests : distillEvalTests) mempty

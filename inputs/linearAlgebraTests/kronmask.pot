@@ -1,0 +1,3 @@
+import LinearAlgebra
+
+main = mask (kron isZ op m1 m2) msk
