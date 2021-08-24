@@ -2,6 +2,9 @@ import Bool
 
 main = 
  
+
+ -- map isZ g (map isZ g m1)
+
  -- FAIL!!!
  -- mEq
 
@@ -34,9 +37,12 @@ main =
 
  -- It works, but result is not ID. Why? 
  -- transpose (transpose m)
+ 
+ -- ????
+ -- mMult
 
  -- ???
- -- mMult isZ f g m1 m2
+ -- mMult isZ f1 g1 m1 m2
 
  -- SLOW / DIV
  -- mMult isZ1 p1 mlt m2 (mask m3 msk)
@@ -63,7 +69,7 @@ main =
  -- mAdd isZ2 p2 (mAdd isZ1 p1 m2 m3) m1
 
  -- OK but slow
- -- mAdd isZ2 p2 (mAdd isZ1 p1 m2 m3) (mAdd isZ2 p2 m1 m4)
+  mAdd isZ2 p2 (mAdd isZ1 p1 m2 m3) (mAdd isZ2 p2 m1 m4)
  
  -- OK but slow
  -- mAdd isZ2 p2 (kron isZ1 p1 m2 m3) (mAdd isZ2 p2 m1 m4)
@@ -87,7 +93,7 @@ main =
  -- map isZ3 g (map isZ2 fT (kron isZ1 op m1 m2))
 
  -- OK
- -- map isZ f (mAdd isZ op m1 m2)
+ -- map isZ g (mAdd isZ op m1 m2)
 
  -- DIV or SLOW
  -- fold or (False) (map isZ fT (kron isZ op m1 m2))
