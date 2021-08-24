@@ -1,0 +1,83 @@
+main = case msk of
+          MNone -> None
+        | MVal -> (case m1 of
+                      Error -> Error
+                    | None -> None
+                    | Val(v) -> (f m2 v)
+                    | Node(q1,q2,q3,q4) -> (f' q1 m2 q2 q3 q4))
+        | MNode(q1,q2,q3,q4) -> (case m1 of
+                                    Error -> Error
+                                  | None -> None
+                                  | Val(v) -> Error
+                                  | Node(t1,t2,t3,t4) -> (f'' q1 t1 m2 q2 t2 q3 t3 q4 t4));
+f'' q1 t1 m2 q2 t2 q3 t3 q4 t4 = Node(case q1 of
+                                         MNone -> None
+                                       | MVal -> (case t1 of
+                                                     Error -> Error
+                                                   | None -> None
+                                                   | Val(v) -> (f m2 v)
+                                                   | Node(q1,q2,q3,q4) -> (f' q1 m2 q2 q3 q4))
+                                       | MNode(q1,q2,q3,q4) -> (case t1 of
+                                                                   Error -> Error
+                                                                 | None -> None
+                                                                 | Val(v) -> Error
+                                                                 | Node(t1,t2,t3,t4) -> (f'' q1 t1 m2 q2 t2 q3 t3 q4 t4)),case q2 of
+                                                                                                                             MNone -> None
+                                                                                                                           | MVal -> (case t2 of
+                                                                                                                                         Error -> Error
+                                                                                                                                       | None -> None
+                                                                                                                                       | Val(v) -> (f m2 v)
+                                                                                                                                       | Node(q1,q2,q3,q4) -> (f' q1 m2 q2 q3 q4))
+                                                                                                                           | MNode(q1,q2,q3,q4) -> (case t2 of
+                                                                                                                                                       Error -> Error
+                                                                                                                                                     | None -> None
+                                                                                                                                                     | Val(v) -> Error
+                                                                                                                                                     | Node(t1,t2,t3,t4) -> (f'' q1 t1 m2 q2 t2 q3 t3 q4 t4)),case q3 of
+                                                                                                                                                                                                                 MNone -> None
+                                                                                                                                                                                                               | MVal -> (case t3 of
+                                                                                                                                                                                                                             Error -> Error
+                                                                                                                                                                                                                           | None -> None
+                                                                                                                                                                                                                           | Val(v) -> (f m2 v)
+                                                                                                                                                                                                                           | Node(q1,q2,q3,q4) -> (f' q1 m2 q2 q3 q4))
+                                                                                                                                                                                                               | MNode(q1,q2,q3,q4) -> (case t3 of
+                                                                                                                                                                                                                                           Error -> Error
+                                                                                                                                                                                                                                         | None -> None
+                                                                                                                                                                                                                                         | Val(v) -> Error
+                                                                                                                                                                                                                                         | Node(t1,t2,t3,t4) -> (f'' q1 t1 m2 q2 t2 q3 t3 q4 t4)),case q4 of
+                                                                                                                                                                                                                                                                                                     MNone -> None
+                                                                                                                                                                                                                                                                                                   | MVal -> (case t4 of
+                                                                                                                                                                                                                                                                                                                 Error -> Error
+                                                                                                                                                                                                                                                                                                               | None -> None
+                                                                                                                                                                                                                                                                                                               | Val(v) -> (f m2 v)
+                                                                                                                                                                                                                                                                                                               | Node(q1,q2,q3,q4) -> (f' q1 m2 q2 q3 q4))
+                                                                                                                                                                                                                                                                                                   | MNode(q1,q2,q3,q4) -> (case t4 of
+                                                                                                                                                                                                                                                                                                                               Error -> Error
+                                                                                                                                                                                                                                                                                                                             | None -> None
+                                                                                                                                                                                                                                                                                                                             | Val(v) -> Error
+                                                                                                                                                                                                                                                                                                                             | Node(t1,t2,t3,t4) -> (f'' q1 t1 m2 q2 t2 q3 t3 q4 t4)));
+f' q1 m2 q2 q3 q4 = Node(case q1 of
+                            Error -> Error
+                          | None -> None
+                          | Val(v) -> (f m2 v)
+                          | Node(q1,q2,q3,q4) -> (f' q1 m2 q2 q3 q4),case q2 of
+                                                                        Error -> Error
+                                                                      | None -> None
+                                                                      | Val(v) -> (f m2 v)
+                                                                      | Node(q1,q2,q3,q4) -> (f' q1 m2 q2 q3 q4),case q3 of
+                                                                                                                    Error -> Error
+                                                                                                                  | None -> None
+                                                                                                                  | Val(v) -> (f m2 v)
+                                                                                                                  | Node(q1,q2,q3,q4) -> (f' q1 m2 q2 q3 q4),case q4 of
+                                                                                                                                                                Error -> Error
+                                                                                                                                                              | None -> None
+                                                                                                                                                              | Val(v) -> (f m2 v)
+                                                                                                                                                              | Node(q1,q2,q3,q4) -> (f' q1 m2 q2 q3 q4));
+f m2 v = case m2 of
+            Error -> Error
+          | None -> None
+          | Val(v') -> (case v of
+                           True -> Val(True)
+                         | False -> (case v' of
+                                        True -> Val(True)
+                                      | False -> None))
+          | Node(q1,q2,q3,q4) -> Node(f q1 v,f q2 v,f q3 v,f q4 v)
