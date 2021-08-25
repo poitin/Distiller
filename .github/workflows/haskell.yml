@@ -8,33 +8,34 @@ on:
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    runs-on: [ubuntu-latest]
+    strategy:
+      fail-fast: false
+      matrix:
+        resolver-yaml:
+        - stack.yaml
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-haskell@v1
-      with:
-        ghc-version: '8.10.3'
-        cabal-version: '3.2'
+    - name: 'GitHub actions environment configuration'
+      run: 'echo "ACTIONS_ALLOW_UNSECURE_COMMANDS=true" >> $GITHUB_ENV'
 
-    - name: Cache
-      uses: actions/cache@v1
+    - name: 'Checkout'
+      uses: actions/checkout@v2
+    
+    - name: 'Setup Stack'
+      uses: mstksg/setup-stack@v1
+
+    - name: 'Install dependencies'
+      # hlint does not build on current stack nightly
+      run: 
+        stack --no-terminal --install-ghc test --only-dependencies
       env:
-        cache-name: cache-cabal
-      with:
-        path: ~/.cabal
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/*.cabal') }}-${{ hashFiles('**/cabal.project') }}
-        restore-keys: |
-          ${{ runner.os }}-build-${{ env.cache-name }}-
-          ${{ runner.os }}-build-
-          ${{ runner.os }}-
+        STACK_YAML: ${{ matrix.resolver-yaml }}
 
-    - name: Install dependencies
-      run: |
-        cabal update
-        cabal build --only-dependencies --enable-tests --enable-benchmarks
-    - name: Build
-      run: cabal build --enable-tests --enable-benchmarks all
-    - name: Run tests
-      run: cabal test all
+    - name: 'Build stack'
+      run:  stack build
+
+    - name : 'Run tests'
+      run: stack test    
+      env:
+        STACK_YAML: ${{ matrix.resolver-yaml }}
