@@ -39,10 +39,10 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - distiller
-  
+
 tests:
   distiller-test:
-    main:               Spec.hs
+    main:               Test.hs
     source-dirs:        test
     ghc-options:
     - -threaded
@@ -50,7 +50,6 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - distiller
-    - HUnit
-    - test-framework
-    - test-framework-hunit
-    
+    - tasty-discover
+    - tasty
+    - tasty-hunit
