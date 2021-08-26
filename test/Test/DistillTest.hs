@@ -103,3 +103,27 @@ test_distillerLinearAlgebraTest3 = do
 test_distillerLinearAlgebraTest4 :: IO TestTree
 test_distillerLinearAlgebraTest4 = do
   createDistillationTest "linearAlgebraTests/kronmask" "inputs/" "gold/linearAlgebra/kronmask_gold" "inputs/" _10sec
+
+test_distillerLinearAlgebraTest5 :: IO TestTree
+test_distillerLinearAlgebraTest5 = do
+  createDistillationTest "linearAlgebraTests/reduceMask1" "inputs/" "gold/linearAlgebra/reduceMask1_gold" "inputs/" defaultTimeout
+
+test_distillerLinearAlgebraTest6 :: IO TestTree
+test_distillerLinearAlgebraTest6 = do
+  createDistillationTest "linearAlgebraTests/addTransposeTranspose" "inputs/" "gold/linearAlgebra/addTransposeTranspose_gold" "inputs/" defaultTimeout
+
+test_distillerLinearAlgebraTest7 :: IO TestTree
+test_distillerLinearAlgebraTest7 = do
+  createDistillationTest "linearAlgebraTests/mMult" "inputs/" "gold/linearAlgebra/mMult_gold" "inputs/" _10sec
+
+test_distillerLinearAlgebraTest8 :: IO TestTree
+test_distillerLinearAlgebraTest8 = do
+  createDistillationTest "linearAlgebraTests/mapKron" "inputs/" "gold/linearAlgebra/mapKron_gold" "inputs/" defaultTimeout
+
+test_distillerLinearAlgebraTest9 :: IO TestTree
+test_distillerLinearAlgebraTest9 = do
+  createDistillationTest "linearAlgebraTests/mAdd" "inputs/" "gold/linearAlgebra/mAdd_gold" "inputs/" defaultTimeout
+
+test_distillerLinearAlgebraTest10 :: IO TestTree
+test_distillerLinearAlgebraTest10 = do
+  createDistillationTest "linearAlgebraTests/mEq" "inputs/" "gold/linearAlgebra/mEq_gold" "inputs/" _10sec

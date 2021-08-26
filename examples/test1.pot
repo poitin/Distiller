@@ -1,4 +1,0 @@
-import Bool
-import QTree
-
-main = kron (not) (or) (mask m1 msk) (m2)
