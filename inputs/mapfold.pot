@@ -1,14 +1,5 @@
-import Bool
+import NatList
 
-main = fold or (False) (map not l);
+main = fold f1 x (map f2 l)
 
-map f l =
-    case l of
-      Nil -> Nil
-      | Cons(hd, tl) -> Cons(f hd,map f tl);
 
-fold f s l =
-    case l of 
-      Nil -> s
-      | Cons(hd, tl) -> fold f (f s hd) tl
-	  

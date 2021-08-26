@@ -11,7 +11,13 @@ import Text.Printf ( printf )
 import Control.Exception
 
 defaultTimeout :: Integer
-defaultTimeout = 2000000
+defaultTimeout = 2 * 1000000 --timeout in nanoseconds: 1 sec = 10^6 ns 
+
+_10sec :: Integer
+_10sec = 10 * 1000000
+
+_1min :: Integer
+_1min = 60 * 1000000
 
 timeOutTest :: Integer -> TestName -> Assertion -> TestTree
 timeOutTest timeout testName assertion =
@@ -64,21 +70,36 @@ test_distillerBasicTest5 :: IO TestTree
 test_distillerBasicTest5 =
   createDistillationTest "revrev" "inputs/" "gold/revrev_gold" "inputs/" defaultTimeout
 
+test_distillerBasicTest6 :: IO TestTree
+test_distillerBasicTest6 =
+  createDistillationTest "mapmap" "inputs/" "gold/mapmap_gold" "inputs/" defaultTimeout
+
+test_distillerBasicTest7 :: IO TestTree
+test_distillerBasicTest7 =
+  createDistillationTest "mapfold" "inputs/" "gold/mapfold_gold" "inputs/" defaultTimeout    
+
+test_distillerBasicTest8 :: IO TestTree
+test_distillerBasicTest8 =
+  createDistillationTest "nonterm" "inputs/" "gold/nonterm_gold" "inputs/" defaultTimeout    
+
+test_distillerBasicTest9 :: IO TestTree
+test_distillerBasicTest9 =
+  createDistillationTest "palindrome" "inputs/" "gold/palindrome_gold" "inputs/" _10sec    
 
 -- Linear algebra tests
 
 test_distillerLinearAlgebraTest1 :: IO TestTree
 test_distillerLinearAlgebraTest1 = do
-  createDistillationTest "linearAlgebraTests/addadd" "inputs/" "gold/linearAlgebra/addadd_gold" "inputs/" defaultTimeout
+  createDistillationTest "linearAlgebraTests/addadd" "inputs/" "gold/linearAlgebra/addadd_gold" "inputs/" _10sec
 
 test_distillerLinearAlgebraTest2 :: IO TestTree
 test_distillerLinearAlgebraTest2 = do
-  createDistillationTest "linearAlgebraTests/addmask" "inputs/" "gold/linearAlgebra/addmask_gold" "inputs/" defaultTimeout
+  createDistillationTest "linearAlgebraTests/addmask" "inputs/" "gold/linearAlgebra/addmask_gold" "inputs/" _10sec
 
 test_distillerLinearAlgebraTest3 :: IO TestTree
 test_distillerLinearAlgebraTest3 = do
-  createDistillationTest "linearAlgebraTests/multmask" "inputs/" "gold/linearAlgebra/multmask_gold" "inputs/" defaultTimeout
+  createDistillationTest "linearAlgebraTests/multmask" "inputs/" "gold/linearAlgebra/multmask_gold" "inputs/" _10sec
 
 test_distillerLinearAlgebraTest4 :: IO TestTree
 test_distillerLinearAlgebraTest4 = do
-  createDistillationTest "linearAlgebraTests/kronmask" "inputs/" "gold/linearAlgebra/kronmask_gold" "inputs/" defaultTimeout
+  createDistillationTest "linearAlgebraTests/kronmask" "inputs/" "gold/linearAlgebra/kronmask_gold" "inputs/" _10sec
