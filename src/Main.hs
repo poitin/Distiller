@@ -38,7 +38,7 @@ command str = let res = words str
                    [":help"] -> Help
                    _ -> Unknown
 
-helpMessage = "\n:load filename directory\t\tTo load the given filename with imports stored in directory\n"++
+helpMessage = "\n:load filename <directory>\t\tTo load the given filename. If a directory is provided, then imports will be loaded from the specified directory. Else all imports will be loaded from the current directory.\n"++
                ":prog\t\t\tTo print the current program\n"++
                ":term\t\t\tTo print the current term\n"++
                ":eval\t\t\tTo evaluate the current program\n"++
