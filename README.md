@@ -1,4 +1,5 @@
-# Distiller
+# Distiller ![Build status](https://github.com/YaccConstructor/Distiller/actions/workflows/haskell.yml/badge.svg)
+
 Implementation of the distillation algorithm as described in the paper ["Distillation: Extracting the Essence of Programs"](https://dl.acm.org/doi/10.1145/1244381.1244391).
 
 The implementation can be built and executed using stack.
