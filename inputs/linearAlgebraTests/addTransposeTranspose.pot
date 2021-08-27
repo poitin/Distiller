@@ -1,0 +1,3 @@
+import LinearAlgebra
+
+main = mAdd isZ p m (transpose (transpose m))

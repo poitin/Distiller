@@ -1,0 +1,3 @@
+import LinearAlgebra
+
+main = mask (mMult isZ p mlt m1 m2) msk

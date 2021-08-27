@@ -1,0 +1,4 @@
+import NatList
+
+main = map f l
+

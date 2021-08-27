@@ -1,0 +1,7 @@
+main = g x;
+
+g z = case z of
+         Zero -> 0
+       | Succ(z') -> (case z' of
+                         Zero -> 2
+                       | Succ(z'') -> (g z''))

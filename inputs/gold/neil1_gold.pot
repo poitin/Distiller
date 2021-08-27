@@ -1,0 +1,4 @@
+main = g x;
+g y = case y of
+         Zero -> 0
+       | Succ(y') -> (g y')

@@ -1,0 +1,3 @@
+import LinearAlgebra
+
+main = reduceMask (MNode (MVal,MVal,MVal,MVal))
