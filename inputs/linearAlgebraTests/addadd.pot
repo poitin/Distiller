@@ -1,0 +1,3 @@
+import LinearAlgebra
+
+main = mAdd isZ p m1 (mAdd isZ p m2 m3)

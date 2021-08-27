@@ -23,4 +23,15 @@ eqNatList xs ys = case xs of
                               | Cons(y,ys) -> False)
                    | Cons(x,xs) -> case ys of
                                       Nil -> False
-                                    | Cons(y,ys) -> and (eqNat x y) (eqNatList xs ys)
+                                    | Cons(y,ys) -> and (eqNat x y) (eqNatList xs ys);
+
+map f l =
+    case l of
+      Nil -> Nil
+      | Cons(hd, tl) -> Cons((f hd), (map f tl));
+
+fold f s l =
+    case l of 
+      Nil -> s
+      | Cons(hd, tl) -> fold f (f s hd) tl
+	                                      

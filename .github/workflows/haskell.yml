@@ -1,0 +1,41 @@
+name: Haskell CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: [ubuntu-latest]
+    strategy:
+      fail-fast: false
+      matrix:
+        resolver-yaml:
+        - stack.yaml
+
+    steps:
+    - name: 'GitHub actions environment configuration'
+      run: 'echo "ACTIONS_ALLOW_UNSECURE_COMMANDS=true" >> $GITHUB_ENV'
+
+    - name: 'Checkout'
+      uses: actions/checkout@v2
+    
+    - name: 'Setup Stack'
+      uses: mstksg/setup-stack@v1
+
+    - name: 'Install dependencies'
+      # hlint does not build on current stack nightly
+      run: 
+        stack --no-terminal --install-ghc test --only-dependencies
+      env:
+        STACK_YAML: ${{ matrix.resolver-yaml }}
+
+    - name: 'Build stack'
+      run:  stack build
+
+    - name : 'Run tests'
+      run: stack test    
+      env:
+        STACK_YAML: ${{ matrix.resolver-yaml }}

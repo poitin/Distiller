@@ -1,96 +1,5 @@
 import Bool
 
-main = 
-
-  kron isZ (or) (mask m1 msk) m2
-
- -- ???
- -- mMult isZ f g m1 m2
-
- -- SLOW / DIV
- -- mMult isZ1 p1 mlt m2 (mask m3 msk)
-
- -- OK
- -- (mAdd isZ1 p1 m2 (mask m3 msk))
-
- -- OK
- -- (mAdd isZ1 p1 (mask m3 msk) m2)
-
- -- OK
- -- mask (mAdd isZ1 p1 m2 m3) msk
- 
- -- OK 
- -- kron isZ p (mask m1 msk) m2 
-
- -- OK
- -- kron isZ p m2 (mask m1 msk)
-
- -- OK 
- -- mask (kron isZ1 p1 m2 m3) msk
-
- -- OK
- -- mAdd isZ2 p2 (mAdd isZ1 p1 m2 m3) m1
-
- -- OK but slow
- -- mAdd isZ2 p2 (mAdd isZ1 p1 m2 m3) (mAdd isZ2 p2 m1 m4)
- 
- -- OK but slow
- -- mAdd isZ2 p2 (kron isZ1 p1 m2 m3) (mAdd isZ2 p2 m1 m4)
-
- -- OK
- -- mask (mask m1 msk1) msk2
-
- -- OK
- -- eWizeScalarOp isZ g s2 (eWizeScalarOp isZ g s m)
- 
- -- OK
- -- eWizeScalarOp isZ1 g s2 (eWizeScalarOp isZ2 g2 s m)
-
- -- OK
- -- mAdd isZ1 p1 (kron isZ1 p1 m2 m3) m1
-
- -- OK
- -- map isZ fT (kron isZ op m1 m2)
-
- -- OK
- -- map isZ3 g (map isZ2 fT (kron isZ1 op m1 m2))
-
- -- OK
- -- map isZ f (mAdd isZ op m1 m2)
-
- -- DIV or SLOW
- -- fold or (False) (map isZ fT (kron isZ op m1 m2))
-
- -- OK
- -- mAdd isZ op m1 m1
-
- -- OK
- -- map isZ2 fT (kron isZ mlt m1 (Node ((Node (Val (x), None, Val (y), None)),
- --                                      None, 
- --                                      (Node (Val (a), Val (b), None, None)),
- --                                      (Node (None, None, None, Val (c)))))) 
-
- -- OK
- -- mAdd isZ pls   (kron isZ mlt m1 (Node ((Node (Val (x), None, Val (y), None)),
- --                                   None, 
- --                                   (Node (Val (a), Val (b), None, None)),
- --                                   (Node (None, None, None, Val (c)))))) 
- --                (kron isZ mlt m2 (Node ((Node (Val (x), None, Val (y), None)),
- --                                   None,
- --                                   (Node (Val (a), Val (b), None, None)),
- --                                   (Node (None, None, None, Val (c))))))
-
- -- OK
- -- mAdd isZ pls  (kron isZ mlt m1 (Node ((Node (Val (x), None, Val (y), None)),
- --                                   None, 
- --                                   (Node (Val (a), Val (b), None, None)),
- --                                   (Node (None, None, None, Val (c)))))) 
- --               m2
-
-;
-
-fT x = True;
-
 mkNode isZ x = case (isZ x) of True -> None | False -> Val(x); 
 
 reduceTree n1 n2 n3 n4 = Node (n1, n2, n3, n4);
@@ -223,3 +132,82 @@ fold f s m =
      | Error -> s
      | Val(v) -> (f s v)
      | Node (n1, n2, n3, n4) -> (fold f (fold f (fold f (fold f s n1) n2) n3) n4)
+;
+
+transpose m =
+    case m of
+      None -> m
+    | Error -> m
+    | Val (v) -> m
+    | Node (q1, q2, q3, q4) -> Node ((transpose q1), (transpose q3), (transpose q2), (transpose q4))
+
+;
+
+complimentary m =
+    let res = 
+        case m of 
+          MNode (m1, m2, m3, m4) -> MNode (complimentary m1, complimentary m2, complimentary m3, complimentary m4)
+        | MNone -> MVal
+        | MVal -> MNone
+    in reduceMask res
+
+;
+
+reduceMask m =
+    case m of
+       MVal -> MVal
+     | MNone -> MNone
+     | MNode (m1, m2, m3, m4) ->
+       (
+            let n1 = reduceMask m1 in
+            let n2 = reduceMask m2 in
+            let n3 = reduceMask m3 in
+            let n4 = reduceMask m4 in
+            let res = MNode (n1, n2, n3, n4) in
+            (case n1 of 
+               MVal -> (case n2 of
+                          MVal -> (case n3 of
+                                     MVal -> (case n4 of
+                                                MVal -> MVal
+                                              | MNone -> res
+                                              | MNode (l1,l2,l3,l4) -> res )
+                                     | MNone -> res
+                                     | MNode (l1,l2,l3,l4) -> res )
+                         | MNone -> res
+                         | MNode (l1,l2,l3,l4) -> res)
+               | MNone -> res
+               | MNode (l1,l2,l3,l4) -> res)
+       )
+;
+
+maskFromMatrix m =
+    let res = 
+        case m of
+          Error -> MNone
+        | Val (v) -> MVal
+        | None -> MNone
+        | Node (m1,m2,m3,m4) -> MNode (maskFromMatrix m1, maskFromMatrix m2, maskFromMatrix m3, maskFromMatrix m4)
+    in reduceMask res
+;
+
+mEq m1 m2 opEq =
+    case m1 of
+      Error -> False
+    | None -> ( case m2 of 
+                  None -> True
+                | Error -> False
+                | Val (v) -> False
+                | Node (n1,n2,n3,n4) -> False
+              )
+    | Val (v1) -> ( case m2 of 
+                      Val (v2) -> opEq v1 v2
+                    | Error -> False
+                    | None -> False
+                    | Node (n1,n2,n3,n4) -> False
+                  ) 
+    | Node (n1,n2,n3,n4) -> ( case m2 of 
+                                Node (l1,l2,l3,l4) -> and (mEq n1 l1 opEq) (and (mEq n2 l2 opEq) (and (mEq n3 l3 opEq) (mEq n4 l4 opEq)))
+                              | Error -> False
+                              | None -> False
+                              | Val (v2) -> False
+                            ) 

@@ -1,8 +1,0 @@
-main =  eWizeOp g s2 (eWizeOp g s m) ;
-
-eWizeOp g s m = 
-    case m of
-           Val (v1) -> (Val (g v1 s))
-         | Node (q1, q2) -> (Node ((eWizeOp g s q1), (eWizeOp g s q2)))
-
-

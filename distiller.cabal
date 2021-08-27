@@ -1,10 +1,8 @@
-cabal-version: 3.0
+cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
---
--- hash: 1d14bbcd1f769a3b8ba1ba9a72963dd7de816e39d26efe5c313c1087daac8448
 
 name:           distiller
 version:        0.1.0.0
@@ -12,9 +10,9 @@ description:    Please see the README on GitHub at <https://github.com/poitin/di
 homepage:       https://github.com/poitin/distiller#readme
 bug-reports:    https://github.com/poitin/distiller/issues
 author:         Geoff Hamilton
-maintainer:     hamilton@computing.dcu.ie
+maintainer:     geoffrey.hamilton@dcu.ie
 copyright:      2021 Geoff Hamilton
-license:        BSD-3-Clause
+license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
@@ -28,6 +26,8 @@ source-repository head
 library
   exposed-modules:
       Exception
+      Helpers
+      Main
       Term
       Trans
   other-modules:
@@ -36,9 +36,9 @@ library
       src
   build-depends:
       base >=4.7 && <5
+    , directory
     , parsec
     , pretty
-    , directory
     , process
   default-language: Haskell2010
 
@@ -46,17 +46,39 @@ executable distiller
   main-is: Main.hs
   other-modules:
       Exception
+      Helpers
       Term
       Trans
+      Paths_distiller
   hs-source-dirs:
       src
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , directory
+    , distiller
     , parsec
     , pretty
-    , directory
     , process
-    , distiller
   default-language: Haskell2010
 
+test-suite distiller-test
+  type: exitcode-stdio-1.0
+  main-is: Test.hs
+  other-modules:
+      Test.DistillTest
+      Paths_distiller
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , directory
+    , distiller
+    , parsec
+    , pretty
+    , process
+    , tasty
+    , tasty-discover
+    , tasty-hunit
+  default-language: Haskell2010

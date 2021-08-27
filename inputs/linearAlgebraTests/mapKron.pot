@@ -1,0 +1,5 @@
+import LinearAlgebra
+
+main = map isZ fT (kron isZ op m1 m2);
+
+fT x = True
