@@ -86,6 +86,24 @@ test_distillerBasicTest9 :: IO TestTree
 test_distillerBasicTest9 =
   createDistillationTest "palindrome" "inputs/" "gold/palindrome_gold" "inputs/" _10sec    
 
+test_distillerBasicTest10 :: IO TestTree
+test_distillerBasicTest10 =
+  createDistillationTest "sumfac" "inputs/" "gold/sumfac_gold" "inputs/" _10sec    
+
+test_distillerBasicTest11 :: IO TestTree
+test_distillerBasicTest11 =
+  createDistillationTest "neil1" "inputs/" "gold/neil1_gold" "inputs/" defaultTimeout    
+
+test_distillerBasicTest12 :: IO TestTree
+test_distillerBasicTest12 =
+  createDistillationTest "neil2" "inputs/" "gold/neil2_gold" "inputs/" defaultTimeout    
+
+
+test_distillerBasicTest13 :: IO TestTree
+test_distillerBasicTest13 =
+  createDistillationTest "neil3" "inputs/" "gold/neil3_gold" "inputs/" _10sec    
+
+
 -- Linear algebra tests
 
 test_distillerLinearAlgebraTest1 :: IO TestTree
