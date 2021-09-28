@@ -15,7 +15,6 @@ import qualified Text.ParserCombinators.Parsec.Token as T
 import Text.ParserCombinators.Parsec.Language
 import System.IO
 import System.Directory
-import Debug.Trace
 
 -- process trees
 
@@ -596,5 +595,3 @@ branch = do
 parseTerm = parse term "Parse error"
 
 parseModule = parse modul "Parse error"
-
-
