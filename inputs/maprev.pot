@@ -1,0 +1,5 @@
+import NatList
+
+main = map inc (qrev xs Nil);
+
+inc n = Succ(n)

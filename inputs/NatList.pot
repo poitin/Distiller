@@ -17,6 +17,10 @@ length xs = case xs of
                Nil        -> Zero
              | Cons(x,xs) -> Succ(length xs);
 
+map f xs = case xs of
+              Nil        -> Nil
+		    | Cons(x,xs) -> Cons(f x,map f xs);
+			
 eqNatList xs ys = case xs of
                      Nil -> (case ys of
                                 Nil -> True
