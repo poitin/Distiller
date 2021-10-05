@@ -1,0 +1,24 @@
+main = fold f2 s (map isZ f1 m1);
+
+mkNode isZ x = case (isZ x) of True -> None | False -> Val(x); 
+
+reduceTree n1 n2 n3 n4 = Node (n1, n2, n3, n4);
+
+map isZ g m = 
+    case m of
+         Error -> Error
+         | None -> None
+         | Val (v) -> (mkNode isZ (g v))
+         | Node (q1, q2, q3, q4) -> (reduceTree 
+                                     (map isZ g q1) 
+                                     (map isZ g q2) 
+                                     (map isZ g q3) 
+                                     (map isZ g q4))
+;
+
+fold g s m =
+     case m of
+       None -> s
+     | Error -> s
+     | Val(v) -> (g s v)
+     | Node (n1, n2, n3, n4) -> g (fold g s n1) (g (fold g s n2) (g (fold g s n3) (fold g s n4)))

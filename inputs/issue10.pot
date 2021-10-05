@@ -1,0 +1,20 @@
+main = mAdd isZ g m1 (mAdd isZ h m2 m3);
+
+mAdd isZ g m1 m2 = 
+    case m1 of
+         Error -> Error
+         | None -> (m2)
+         | Val (v1) -> (case m2 of 
+                        Error -> Error 
+                        | None -> m1 
+                        | Val (v) -> (mkNode isZ (g v1 v))
+                        | Node (t1, t2, t3, t4) -> Error)
+         | Node (q1, q2, q3, q4) -> (case m2 of 
+                                    Error -> Error
+                                    | None -> m1 
+                                    | Val (v) -> Error 
+                                    | Node (t1, t2, t3, t4) -> (Node( 
+                                                                     (mAdd isZ g q1 t1) 
+                                                                    ,(mAdd isZ g q2 t2) 
+                                                                    ,(mAdd isZ g q3 t3) 
+                                                                    ,(mAdd isZ g q4 t4))))

@@ -8,8 +8,8 @@ import Data.List
 import Data.Tuple
 
 dist (t,d) = let t' = returnval (trans 2 t EmptyCtx (free t) [] d)
-             in  residualise (t',d)
-         
+             in  residualise (t',[])
+             
 -- level n transformer
 
 trans 0 t k fv m d = return (place t k)
@@ -41,12 +41,10 @@ trans n (Apply t u) k fv m d = trans n t (ApplyCtx k u) fv m d
 trans n (Fun f) k fv m d | f `notElem` map fst d = return (place (Fun f) k)
 trans n (Fun f) k fv m d = let t = returnval (trans (n-1) (Fun f) k fv [] d)
                            in  case [(f,xs,s) | (f,(xs,t')) <- m, s <- inst t' t] of
-                                  ((f,xs,s):_) -> do
-                                                  s' <- mapM (\(x,t) -> let (t',d') = residualise (t,d)
-                                                                        in  do
-                                                                            t'' <- trans n t' EmptyCtx fv m d'
-                                                                            return (x,t'')) s
-                                                  return (Fold (instantiate s' (foldl (\t x -> Apply t (Free x)) (Fun f) xs)))
+                                  ((f,xs,s):_) -> let (t',d') = residualise (instantiate s (foldl (\t x -> Apply t (Free x)) (Fun f) xs),[])
+                                                  in  do 
+                                                      t'' <- trans n t' EmptyCtx fv m d'
+                                                      return (Fold t'')
                                   [] -> case [(f,r) | (f,(xs,t')) <- m, r <- embedding t' t] of
                                            ((f,r):_) -> throw (f,t,r)
                                            [] -> let f = renameVar (map fst m ++ map fst d) "f"
@@ -57,7 +55,7 @@ trans n (Fun f) k fv m d = let t = returnval (trans (n-1) (Fun f) k fv [] d)
                                                                          then let t'' = generaliseTree t u' r
                                                                                   (u'',d') = residualise (t'',d)
                                                                               in  trans n u'' EmptyCtx fv m d'
-                                                                         else throw (f',u',r)
+                                                                          else throw (f',u',r)
                                                  in  do
                                                      u' <- handle (trans n (unfold(u,d')) EmptyCtx fv ((f,(xs,t)):m) d') handler
                                                      return (if redex t' `elem` folds u' then Unfold t' u' else u')

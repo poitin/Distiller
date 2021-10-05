@@ -74,11 +74,32 @@ redex t = t
 
 matchCase bs bs' = length bs == length bs' && all (\((c,xs,t),(c',xs',t')) -> c == c' && length xs == length xs') (zip bs bs')
 
+-- process tree renaming
+
+renaming t u = renaming' [] t u []
+
+renaming' fs (Free x) (Free x') r = if   x `elem` map fst r
+                                    then [r | (x,x') `elem` r]
+                                    else [(x,x'):r] 
+renaming' fs (Bound i) (Bound i') r | i==i' = [r]
+renaming' fs (Lambda x t) (Lambda x' t') r = renaming' fs t t' r
+renaming' fs (Con c ts) (Con c' ts') r | c==c' = foldr (\(t,t') rs -> concat [renaming' fs t t' r | r <- rs]) [r] (zip ts ts')
+renaming' fs (Apply t u) (Apply t' u') r = concat [renaming' fs u u' r' | r' <- renaming' fs t t' r]
+renaming' fs (Fun f) (Fun f') r | f==f' = [r]
+renaming' fs (Case t bs) (Case t' bs') r | matchCase bs bs' = foldr (\((c,xs,t),(c',xs',t')) rs -> concat [renaming' fs t t' r | r <- rs]) (renaming' fs t t' r) (zip bs bs')
+renaming' fs (Let x t u) (Let x' t' u') r = concat [renaming' fs u u' r' | r' <- renaming' fs t t' r]
+renaming' fs (Unfold t u) (Unfold t' u') r = renaming' ((redex t,redex t'):fs) u u' r
+renaming' fs (Fold t) (Fold t') r = [r | (redex t,redex t') `elem` fs]     
+renaming' fs t u r = []
+
 -- process tree instance
 
 inst t u = inst' [] t u (free t ++ free u) [] []
 
 inst' fs (Free x) t fv bv s | x `elem` bv = [s | t==Free x]
+inst' fs (Free x) t fv bv s | x `elem` fv = if   x `elem` map fst s
+                                            then [s | (x,t) `elem` s]
+                                            else [(x,t):s] 
 inst' fs (Bound i) (Bound i') fv bv s | i==i' = [s]
 inst' fs (Lambda x t) (Lambda x' t') fv bv s = let x'' = renameVar fv x
                                                in  inst' fs (concrete x'' t) (concrete x'' t') (x'':fv) (x'':bv) s
@@ -92,12 +113,8 @@ inst' fs (Let x t u) (Let x' t' u') fv bv s = let x'' = renameVar fv x
                                               in  concat [inst' fs (concrete x'' u) (concrete x'' u') (x'':fv) (x'':bv) s' | s' <- inst' fs t t' fv bv s]
 inst' fs (Unfold t u) (Unfold t' u') fv bv s = inst' ((redex t,redex t'):fs) u u' fv bv s
 inst' fs (Fold t) (Fold t') fv bv s = [s | (redex t,redex t') `elem` fs]
-inst' fs t u fv bv s | varApp fv t = let (Free x) = redex t
-                                         xs = delete x (free t)
-                                         u' = foldr Lambda (foldl abstract u xs) xs
-                                     in  if   x `elem` map fst s
-                                         then [s | (x,u') `elem` s]
-                                         else [(x,u'):s]       
+inst' fs t u fv bv s | appInst t u = let (x,u') = appInstVal t u
+                                     in  inst' fs (Free x) u' fv bv s       
 inst' fs t u fv bv s = []
 
 -- homeomorphic embedding of process trees
@@ -134,11 +151,8 @@ generaliseTree t u r = let (t',s1,s2) = generalise [] t u r (free t++free u) [] 
                        in  t'
 
 generalise fs t u r fv bv s1 s2 | not (null(couple fs t u r)) = generalise' fs t u r fv bv s1 s2
-generalise fs t u r fv bv s1 s2 | varApp bv t = let Free x = redex t
-                                                    xs = delete x (free t)
-                                                    t' = foldr Lambda (foldl abstract t xs) xs
-                                                    u' = foldr Lambda (foldl abstract u xs) xs
-                                                in  (Gen t t',(x,t'):s1,(x,u'):s2)
+generalise fs t u r fv bv s1 s2 | appInst t u = let (x,u') = appInstVal t u
+                                                in  (Gen t t,(x,Free x):s1,(x,u'):s2)
 generalise fs t u r fv bv s1 s2 = let xs = nub (bv `intersect` free t)
                                       t' = foldr Lambda (foldl abstract t xs) xs
                                       u' = foldr Lambda (foldl abstract u xs) xs
@@ -179,6 +193,7 @@ generalise' fs (Fold t) (Fold t') r fv bv s1 s2 | (redex t,redex t') `elem` fs =
 residualise (t,d) = let (t',s',d') = residualise' t (free t) [] [] [] d
                     in  (makeLet s' t',d')
 
+
 residualise' (Free x) fv bv m s d = (Free x,s,d)
 residualise' (Bound i) fv bv m s d = (Bound i,s,d)
 residualise' (Lambda x t) fv bv m s d = let x' = renameVar fv x
@@ -204,13 +219,10 @@ residualise' (Let x t u) fv bv m s d = let x' = renameVar fv x
 residualise' (Unfold t u) fv bv m s d = let f = renameVar (map fst m ++ map fst d) "f"
                                             xs = free u
                                             t' = foldl (\t x -> Apply t (Free x)) (Fun f) xs
-                                            (u',s',d') = residualise' u fv xs ((f,(xs,t)):m) s d
+                                            (u',s',d') = residualise' u fv (xs++bv) ((f,(xs,t)):m) s d
                                         in  (t',s',(f,(xs,foldl abstract u' xs)):d')
-residualise' (Fold t) fv bv m s d = case [(f,xs,i) | (f,(xs,u)) <- m, i <- inst u t] of
-                                       ((f,xs,i):_) -> let ((s',d'),i') = mapAccumL (\(s,d) (x,t) -> let (t',s',d') = residualise' t fv bv m s d
-                                                                                                     in  ((s',d'),(x,t'))) (s,d) i
-                                                       in  (instantiate i' (foldl (\t x -> Apply t (Free x)) (Fun f) xs),s',d')
-                                       [] -> residualise' t fv bv m s d
+residualise' (Fold t) fv bv m s d = case [(f,xs,s') | (f,(xs,u)) <- m, s' <- inst u t] of
+                                       ((f,xs,s'):_) -> residualise' (makeLet s' (foldl (\t x -> Apply t (Free x)) (Fun f) xs)) fv bv m s d
 residualise' (Gen t u) fv bv m s d = let Free x = redex t
                                      in  if x `elem` map fst s
                                          then (t,s,d)
@@ -406,9 +418,12 @@ unfold (Fun f,d) = case lookup f d of
                     Just (xs,t) -> foldr Lambda t xs
 unfold (t,d) = t
 
-varApp xs (Free x) = x `elem` xs
-varApp xs (Apply t (Free x)) = varApp xs t
-varApp xs t = False
+appInst (Free x) u = x `elem` free u
+appInst (Apply t (Free x)) u = appInst t (Lambda x (abstract u x))
+appInst t u = False
+
+appInstVal (Free x) u = (x,u)
+appInstVal (Apply t (Free x)) u = appInstVal t (Lambda x (abstract u x))
 
 -- pretty printing
 

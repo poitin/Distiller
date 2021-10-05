@@ -1,0 +1,45 @@
+main = mMult is_zero op_add op_mult mtx1 mtx2
+;
+
+mMult isZ f_add f_mul m1 m2 = 
+    case m1 of 
+         Error -> Error
+         | None -> None
+         | Val (v1) -> 
+             (case m2 of
+                  Error -> Error 
+                  | None -> None
+                  | Val (v) -> (mkNode isZ (f_mul v1 v))
+                  | Node (t1, t2, t3, t4) -> Error)
+         | Node (q1, q2, q3, q4) -> 
+              (case m2 of 
+                   Error -> Error
+                   | None -> None 
+                   | Val (v) -> Error
+                   | Node (t1, t2, t3, t4) -> 
+                          (Node(
+                                 (mAdd isZ f_add (mMult isZ f_add f_mul q1 t1)(mMult isZ f_add f_mul q2 t3)) 
+                                ,(mAdd isZ f_add (mMult isZ f_add f_mul q1 t2)(mMult isZ f_add f_mul q2 t4)) 
+                                ,(mAdd isZ f_add (mMult isZ f_add f_mul q3 t1)(mMult isZ f_add f_mul q4 t3)) 
+                                ,(mAdd isZ f_add (mMult isZ f_add f_mul q3 t2)(mMult isZ f_add f_mul q4 t4))))
+              )
+;
+
+mAdd isZ f_add m1 m2 = 
+    case m1 of
+         Error -> Error
+         | None -> (m2)
+         | Val (v1) -> (case m2 of 
+                        Error -> Error 
+                        | None -> m1 
+                        | Val (v) -> (mkNode isZ (f_add v1 v))
+                        | Node (t1, t2, t3, t4) -> Error)
+         | Node (q1, q2, q3, q4) -> (case m2 of 
+                                    Error -> Error
+                                    | None -> m1 
+                                    | Val (v) -> Error 
+                                    | Node (t1, t2, t3, t4) -> (Node( 
+                                                                     (mAdd isZ f_add q1 t1) 
+                                                                    ,(mAdd isZ f_add q2 t2) 
+                                                                    ,(mAdd isZ f_add q3 t3) 
+                                                                    ,(mAdd isZ f_add q4 t4))))

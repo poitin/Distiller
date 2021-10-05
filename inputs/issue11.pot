@@ -1,0 +1,48 @@
+import Bool
+import Nat
+
+main = map is_z_nut h (mAdd is_z_bool op m1 m2)
+;
+
+is_z_nut x = eqNat x (Zero)
+;
+
+is_z_bool x = eqBool x (False)
+;
+
+op x y = or x y
+;
+
+h x = (Succ(Zero))
+;
+
+map isZ g m = 
+    case m of
+         Error -> Error
+         | None -> None
+         | Val (v) -> (mkNode isZ (g v))
+         | Node (q1, q2, q3, q4) -> (Node( 
+                                     (map isZ g q1) 
+                                     ,(map isZ g q2) 
+                                     ,(map isZ g q3) 
+                                     ,(map isZ g q4)))
+;
+
+mAdd isZ g m1 m2 = 
+    case m1 of
+         Error -> Error
+         | None -> (m2)
+         | Val (v1) -> (case m2 of 
+                        Error -> Error 
+                        | None -> m1 
+                        | Val (v) -> (mkNode isZ (g v1 v))
+                        | Node (t1, t2, t3, t4) -> Error)
+         | Node (q1, q2, q3, q4) -> (case m2 of 
+                                    Error -> Error
+                                    | None -> m1 
+                                    | Val (v) -> Error 
+                                    | Node (t1, t2, t3, t4) -> (Node( 
+                                                                     (mAdd isZ g q1 t1) 
+                                                                    ,(mAdd isZ g q2 t2) 
+                                                                    ,(mAdd isZ g q3 t3) 
+                                                                    ,(mAdd isZ g q4 t4))))
