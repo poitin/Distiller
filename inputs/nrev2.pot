@@ -1,0 +1,16 @@
+main = nrev2 xs;
+
+nrev2 xs =
+  case xs of
+      Nil -> Nil
+    | Cons(a, as) -> Cons(last a as, nrev2 (cutlast a as));
+
+last b bs =
+  case bs of
+      Nil -> b
+    | Cons(c, cs) -> last c cs;
+
+cutlast d ds =
+  case ds of
+      Nil -> Nil
+    | Cons(e, es) -> Cons(d, cutlast e es)

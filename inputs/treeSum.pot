@@ -1,0 +1,15 @@
+main = treeSum (treeIncr (treeDouble tree));
+
+treeFold f b t = case t of
+                    Empty -> b
+                  | Node(l,x,r) -> f (treeFold f b l) x (treeFold f b r);
+
+treeMap f t = case t of
+                 Empty -> Empty
+			   | Node(l,x,r) -> Node(treeMap f l,f x,treeMap f r);
+
+treeDouble t = treeMap double t;
+
+treeIncr t   = treeMap incr t;
+
+treeSum t = treeFold (\l x r -> add l (add x r)) 0 t

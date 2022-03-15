@@ -29,6 +29,7 @@ library
   exposed-modules:
       Exception
       Term
+      Tree
       Trans
   other-modules:
       Paths_distiller
@@ -47,6 +48,7 @@ executable distiller
   other-modules:
       Exception
       Term
+      Tree
       Trans
   hs-source-dirs:
       src

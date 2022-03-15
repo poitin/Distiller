@@ -1,5 +1,4 @@
-main = mMult is_zero op_add op_mult mtx1 mtx2
-;
+main = mMult is_zero op_add op_mult mtx1 mtx2;
 
 mMult isZ f_add f_mul m1 m2 = 
     case m1 of 

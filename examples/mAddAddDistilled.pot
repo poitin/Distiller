@@ -1,0 +1,59 @@
+main = f m1 m2 m3 mkNode is_zero op_add;
+f m1 m2 m3 mkNode is_zero op_add = case m1 of
+                                      Error -> Error
+                                    | None -> (f' m2 m3 mkNode is_zero op_add)
+                                    | Val(v1) -> (case m2 of
+                                                     Error -> Error
+                                                   | None -> (case m3 of
+                                                                 Error -> Error
+                                                               | None -> Val(v1)
+                                                               | Val(v) -> (mkNode is_zero (op_add v1 v))
+                                                               | Node(t1,t2,t3,t4) -> Error)
+                                                   | Val(v1') -> (case m3 of
+                                                                     Error -> Error
+                                                                   | None -> (mkNode is_zero (op_add v1 v1'))
+                                                                   | Val(v) -> (case (mkNode is_zero (op_add v1' v)) of
+                                                                                   Error -> Error
+                                                                                 | None -> Val(v1)
+                                                                                 | Val(v) -> (mkNode is_zero (op_add v1 v))
+                                                                                 | Node(t1,t2,t3,t4) -> Error)
+                                                                   | Node(t1,t2,t3,t4) -> Error)
+                                                   | Node(q1,q2,q3,q4) -> (case m3 of
+                                                                              Error -> Error
+                                                                            | None -> Error
+                                                                            | Val(v) -> Error
+                                                                            | Node(t1,t2,t3,t4) -> Error))
+                                    | Node(q1,q2,q3,q4) -> (case m2 of
+                                                               Error -> Error
+                                                             | None -> (case m3 of
+                                                                           Error -> Error
+                                                                         | None -> Node(q1,q2,q3,q4)
+                                                                         | Val(v) -> Error
+                                                                         | Node(t1,t2,t3,t4) -> Node(f' q1 t1 mkNode is_zero op_add,f' q2 t2 mkNode is_zero op_add,f' q3 t3 mkNode is_zero op_add,f' q4 t4 mkNode is_zero op_add))
+                                                             | Val(v1) -> (case m3 of
+                                                                              Error -> Error
+                                                                            | None -> Error
+                                                                            | Val(v) -> (case (mkNode is_zero (op_add v1 v)) of
+                                                                                            Error -> Error
+                                                                                          | None -> Node(q1,q2,q3,q4)
+                                                                                          | Val(v) -> Error
+                                                                                          | Node(t1,t2,t3,t4) -> Node(f' q1 t1 mkNode is_zero op_add,f' q2 t2 mkNode is_zero op_add,f' q3 t3 mkNode is_zero op_add,f' q4 t4 mkNode is_zero op_add))
+                                                                            | Node(t1,t2,t3,t4) -> Error)
+                                                             | Node(q1',q2',q3',q4') -> (case m3 of
+                                                                                            Error -> Error
+                                                                                          | None -> Node(f' q1 q1' mkNode is_zero op_add,f' q2 q2' mkNode is_zero op_add,f' q3 q3' mkNode is_zero op_add,f' q4 q4' mkNode is_zero op_add)
+                                                                                          | Val(v) -> Error
+                                                                                          | Node(t1,t2,t3,t4) -> Node(f q1 q1' t1 mkNode is_zero op_add,f q2 q2' t2 mkNode is_zero op_add,f q3 q3' t3 mkNode is_zero op_add,f q4 q4' t4 mkNode is_zero op_add)));
+f' m2 m3 mkNode is_zero op_add = case m2 of
+                                    Error -> Error
+                                  | None -> m3
+                                  | Val(v1) -> (case m3 of
+                                                   Error -> Error
+                                                 | None -> Val(v1)
+                                                 | Val(v) -> (mkNode is_zero (op_add v1 v))
+                                                 | Node(t1,t2,t3,t4) -> Error)
+                                  | Node(q1,q2,q3,q4) -> (case m3 of
+                                                             Error -> Error
+                                                           | None -> Node(q1,q2,q3,q4)
+                                                           | Val(v) -> Error
+                                                           | Node(t1,t2,t3,t4) -> Node(f' q1 t1 mkNode is_zero op_add,f' q2 t2 mkNode is_zero op_add,f' q3 t3 mkNode is_zero op_add,f' q4 t4 mkNode is_zero op_add))

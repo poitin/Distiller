@@ -1,0 +1,9 @@
+main = case x of
+          Zero -> 0
+		| Succ(x') -> f x' y (\x -> x);
+f x y g = case y of
+             Zero -> (f' x g)
+           | Succ(y') -> Succ(f x y' (\x -> Succ(g x)));
+f' x g = case x of
+            Zero -> Zero
+		  | Succ(x') -> g (f' x' g)

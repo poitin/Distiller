@@ -1,0 +1,27 @@
+main = eql x x;
+
+logand x1 x2 = case x1 of 
+                False -> False
+              | True -> x2;
+
+eql x y = case x of 
+             Cons(ls, x') -> (case y of
+                         Cons(lt, y') -> logand (eqq ls lt) (eql x' y')
+                       | Nil -> False )
+           | Nil -> (case y of
+                         Nil -> True
+                       | Cons(ls, y') -> False );
+
+eqq x y = case x of
+             Cons(s, x') -> (case y of
+                        Cons(t, y') -> (case s of
+                                          True -> (case t of
+                                                      True -> eqq x' y'
+                                                    | False -> False )
+                                        | False -> (case t of
+                                                      False -> eqq x' y'
+                                                    | True -> False ) )
+                     | Nil -> False )
+           | Nil -> (case y of
+                        Nil -> True
+                      | Cons(s, y') -> False)

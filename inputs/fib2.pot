@@ -1,4 +1,4 @@
-main = fib n (\x -> x) (\y -> y);
+main = fib n (\x->x) (\x->x);
 
 fib n f g = case n of
                Zero    -> f 1

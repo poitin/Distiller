@@ -1,0 +1,13 @@
+main = map g xs;
+
+map g xs = map1 Nil g xs;
+
+map1 res g xs =
+  case xs of
+      Nil -> res
+    | Cons(x, xs1) -> map1 (push res (g x)) g xs1;
+
+push xs c =
+  case xs of
+      Nil -> Cons(c, Nil)
+    | Cons(x, xs1) -> Cons(x, (push xs1 c))

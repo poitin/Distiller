@@ -1,0 +1,10 @@
+main = case y of
+          Zero -> (case x' of
+             Zero -> 0
+           | Succ(x') -> f y x' y)
+        | Succ(x'') -> Succ(f x'' x' y);
+f y x' x = case y of
+              Zero -> (case x' of
+                          Zero -> 0
+                        | Succ(x') -> f x x' x)
+            | Succ(x'') -> Succ(f x'' x' x)

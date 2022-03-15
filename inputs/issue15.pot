@@ -1,0 +1,6 @@
+main = map f xs;
+
+map g xs =
+  case xs of
+      Nil -> Nil
+    | Cons(x, xs1) -> Cons(g x, map g xs1)

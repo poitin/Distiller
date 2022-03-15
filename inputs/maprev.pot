@@ -1,0 +1,9 @@
+import NatList
+
+main = map inc (qrev xs []);
+
+map f xs = case xs of
+              Nil -> Nil
+	    	| Cons(x,xs) -> Cons(f x,map f xs);
+
+inc n = Succ(n)
