@@ -415,6 +415,7 @@ makeFun fs (Let x t u) = Let x (makeFun fs t) (makeFun fs u)
 modul = do
         fs <- many imp
         ds <- sepBy1 fundef semic
+        eof
         return (fs,ds)
 
 imp = do
