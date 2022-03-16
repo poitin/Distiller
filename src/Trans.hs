@@ -104,27 +104,25 @@ distill (Con c ts) (CaseCtx k bs) fv m d = case find (\(c',xs,t) -> c==c' && len
                                               Just (c',xs,t) -> distill (foldr subst t ts) k fv m d
 distill (Apply t u) k fv m d = distill t (ApplyCtx k u) fv m d
 distill (Fun f) k fv m d = let t = returnval (super (Fun f) k fv [] d)
-                           in  case [(f,t') | (f,t') <- m, embeddingTree t' t] of
-                                  [] -> let f = renameVar (map fst m) "f"
-                                            (t',s',d') = residualise t []
-                                            handler (f',t') = if   f==f'
-                                                              then let (u,s1,s2) = generaliseTree t t'
-                                                                       (u',s',d') = residualise u s1
-                                                                       fv' = map fst s' ++ fv
-                                                                   in  do
-                                                                       s'' <- mapM (\(x,t) -> do
-                                                                                              t' <- distill t EmptyCtx fv' m d'
-                                                                                              return (x,t')) s'
-                                                                       u' <- distill u' EmptyCtx fv' m d'
-                                                                       return (makeGen s'' u')
-                                                              else throw (f',t')
-                                        in  do
-                                            u <- handle (distill (unfold(t',d')) EmptyCtx fv ((f,t):m) d') handler
-                                            return (if f `elem` folds u  then Unfold f u else u)
-                                  m' -> case [(f,s) | (f,t') <- m', s <- instTree t' t] of
-                                           ((f,s):_) -> return (Fold f s)
-                                           [] -> let (f,_) = head m'
-                                                 in  throw (f,t)       
+                           in  case [(f,s) | (f,t') <- m, s <- instTree t' t] of
+                                  ((f,s):_) -> return (Fold f s)
+                                  [] -> case [(f,u,s) | (f,t') <- m, embeddingTree t' t, let (u,s,_) = generaliseTree t' t, not (null s)] of
+                                           ((f,u,s):_) -> throw (f,u,s) 
+                                           [] -> let f = renameVar (map fst m) "f"
+                                                     (t',s',d') = residualise t []
+                                                     handler (f',u,s) = if   f==f'
+                                                                       then let (u',s',d') = residualise u s
+                                                                                fv' = map fst s' ++ fv
+                                                                            in  do
+                                                                                s'' <- mapM (\(x,t) -> do
+                                                                                                       t' <- distill t EmptyCtx fv' m d'
+                                                                                                       return (x,t')) s'
+                                                                                u' <- distill u' EmptyCtx fv' m d'
+                                                                                return (makeGen s'' u')
+                                                                       else throw (f',u,s)
+                                                 in  do
+                                                     u <- handle (distill (unfold(t',d')) EmptyCtx fv ((f,t):m) d') handler
+                                                     return (if f `elem` folds u  then Unfold f u else u)                                      
 distill (Case t bs) k fv m d = distill t (CaseCtx k bs) fv m d
 
 distillCtx t EmptyCtx fv m d = return t

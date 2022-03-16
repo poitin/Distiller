@@ -98,7 +98,7 @@ coupleTree fs t t' = False
 
 diveTree fs t (Abs x t') = embedTree fs t t'
 diveTree fs t (Cons c ts) = any (embedTree fs t) ts
-diveTree fs t (App t' u) = embedTree fs t t' || embedTree fs t u 
+diveTree fs t (App t' u) = embedTree fs t t' || embedTree fs t u
 diveTree fs t (Choice t' bs) = embedTree fs t t' || any (\(c,xs,t') -> embedTree fs t t') bs
 diveTree fs t (Gen x t' u) = embedTree fs t t' || embedTree fs t u
 diveTree fs t (Unfold t' u) = embedTree fs t u
@@ -126,7 +126,7 @@ generaliseTree' fs (Gen x t u) (Gen x' t' u') fv s1 s2 = let (u'',s1',s2') = gen
                                                          in  if   x `elem` map fst s2'
                                                              then let x' = renameVar (fv++map fst s1') "x"
                                                                   in  (Gen x (Var x') u'',(x',t):s1',s2')
-                                                             else (Gen x t u'',s1',s2')
+                                                               else (Gen x t u'',s1',s2')
 generaliseTree' fs (Unfold f t) (Unfold f' t') fv s1 s2 = let (t'',s1',s2') = generaliseTree' ((f,f'):fs) t t' fv s1 s2
                                                           in  (Unfold f t'',s1',s2')
 generaliseTree' fs (Fold f s) (Fold f' s') fv s1 s2 | (f,f') `elem` fs = (Fold f s,s1,s2)
