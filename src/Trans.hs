@@ -106,23 +106,25 @@ distill (Apply t u) k fv m d = distill t (ApplyCtx k u) fv m d
 distill (Fun f) k fv m d = let t = returnval (super (Fun f) k fv [] d)
                            in  case [(f,s) | (f,t') <- m, s <- instTree t' t] of
                                   ((f,s):_) -> return (Fold f s)
-                                  [] -> case [(f,u,s) | (f,t') <- m, embeddingTree t' t, let (u,s,_) = generaliseTree t' t, not (null s)] of
-                                           ((f,u,s):_) -> throw (f,u,s) 
+                                  [] -> case [(f,t') | (f,t') <- m, embeddingTree t' t] of
+                                           ((f,t'):_) -> throw (f,t') 
                                            [] -> let f = renameVar (map fst m) "f"
                                                      (t',s',d') = residualise t []
-                                                     handler (f',u,s) = if   f==f'
-                                                                       then let (u',s',d') = residualise u s
-                                                                                fv' = map fst s' ++ fv
-                                                                            in  do
-                                                                                s'' <- mapM (\(x,t) -> do
-                                                                                                       t' <- distill t EmptyCtx fv' m d'
-                                                                                                       return (x,t')) s'
-                                                                                u' <- distill u' EmptyCtx fv' m d'
-                                                                                return (makeGen s'' u')
-                                                                       else throw (f',u,s)
+                                                     handler (f',t') = if   f==f'
+                                                                       then let (u,s1,s2) = generaliseTree t t'
+                                                                            in  if   null s1
+                                                                                then return u 
+                                                                                else let (u',s',d') = residualise u s1
+                                                                                     in  do
+                                                                                         s'' <- mapM (\(x,t) -> do
+                                                                                                                t' <- distill t EmptyCtx fv m d'
+                                                                                                                return (x,t')) s'
+                                                                                         u' <- distill u' EmptyCtx (map fst s''++fv) m d'
+                                                                                         return (makeGen s'' u')
+                                                                       else throw (f',t')
                                                  in  do
                                                      u <- handle (distill (unfold(t',d')) EmptyCtx fv ((f,t):m) d') handler
-                                                     return (if f `elem` folds u  then Unfold f u else u)                                      
+                                                     return (if f `elem` folds u  then Unfold f u else u)                              
 distill (Case t bs) k fv m d = distill t (CaseCtx k bs) fv m d
 
 distillCtx t EmptyCtx fv m d = return t
