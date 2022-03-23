@@ -64,6 +64,7 @@ super (Fun f) k fv m d = let t = place (Fun f) k
                                               in  throw (f,t)
                                 
 super (Case t bs) k fv m d = super t (CaseCtx k bs) fv m d
+super (Let x t u) k fv m d = super (subst t u) k fv m d
 
 superCtx t EmptyCtx fv m d = return t
 superCtx t (ApplyCtx k u) fv m d = do
@@ -126,6 +127,7 @@ distill (Fun f) k fv m d = let t = returnval (super (Fun f) k fv [] d)
                                                      u <- handle (distill (unfold(t',d')) EmptyCtx fv ((f,t):m) d') handler
                                                      return (if f `elem` folds u  then Unfold f u else u)                              
 distill (Case t bs) k fv m d = distill t (CaseCtx k bs) fv m d
+distill (Let x t u) k fv m d = distill (subst t u) k fv m d
 
 distillCtx t EmptyCtx fv m d = return t
 distillCtx t (ApplyCtx k u) fv m d = do

@@ -1,12 +1,4 @@
-main = case xs of
-          Nil -> Nil
-	    | Cons(x,xs) -> f xs (\xs -> last x xs);
+main = f xs (\x->x);
 f xs g = case xs of
-            Nil -> Nil
-	      | Cons(x,xs) -> Cons(g xs,f xs (\xs->g xs));
-last b bs = case bs of
-		       Nil -> b
-		     | Cons(c,cs) -> last c cs;
-secondlast a b bs = case bs of
-                       Nil -> a
-					 | Cons(c,cs) -> secondlast b c cs
+            Nil -> g Nil
+	      | Cons(x,xs) -> f xs (\xs->Cons(x,g xs))

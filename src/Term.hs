@@ -120,8 +120,8 @@ generalise t u fv = generalise' t u fv [] []
 
 generalise' (Free x) (Free x') fv s1 s2 = (Free x,s1,s2)                                
 generalise' (Bound i) (Bound i') fv s1 s2 = (Bound i,s1,s2)
-generalise' (Lambda x t) (Lambda x' t') fv s1 s2 = let (t'',s1',s2') = generalise' t t' fv s1 s2
-                                                   in  (Lambda x t'',s1',s2')
+generalise' (Lambda x t) (Lambda x' t') fv s1 s2 | embedding t t' = let (t'',s1',s2') = generalise' t t' fv s1 s2
+                                                                    in  (Lambda x t'',s1',s2')
 generalise' (Con c ts) (Con c' ts') fv s1 s2 | c==c' = let ((s1',s2'),ts'') = mapAccumL (\(s1,s2) (t,t') -> let (t'',s1',s2') = generalise' t t' fv s1 s2
                                                                                                             in  ((s1',s2'),t'')) (s1,s2) (zip ts ts')
                                                        in  (Con c ts'',s1',s2')
