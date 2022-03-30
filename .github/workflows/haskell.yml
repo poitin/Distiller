@@ -2,9 +2,9 @@ name: Haskell CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, draft-arch ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, draft-arch ]
 
 jobs:
   build:
