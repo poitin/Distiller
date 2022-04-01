@@ -28,6 +28,9 @@ data Tree = Var String -- variable
           | Unfold String Tree -- unfold node
           | Fold String [(String,Tree)] -- fold node
 
+instance Show Tree where
+   show t = render $ prettyTree t
+
 matchChoice bs bs' = length bs == length bs' && all (\((c,xs,t),(c',xs',t')) -> c == c' && length xs == length xs') (zip bs bs')
 
 -- equality of process trees
@@ -126,7 +129,7 @@ generaliseTree' fs (Gen x t u) (Gen x' t' u') fv s1 s2 = let (u'',s1',s2') = gen
                                                          in  if   x `elem` map fst s2'
                                                              then let x' = renameVar (fv++map fst s1') "x"
                                                                   in  (Gen x (Var x') u'',(x',t):s1',s2')
-                                                               else (Gen x t u'',s1',s2')
+                                                             else (Gen x t u'',s1',s2')
 generaliseTree' fs (Unfold f t) (Unfold f' t') fv s1 s2 = let (t'',s1',s2') = generaliseTree' ((f,f'):fs) t t' fv s1 s2
                                                           in  (Unfold f t'',s1',s2')
 generaliseTree' fs (Fold f s) (Fold f' s') fv s1 s2 | (f,f') `elem` fs = (Fold f s,s1,s2)
@@ -224,3 +227,18 @@ folds (Choice t bs) = folds t ++ concatMap (\(c,xs,t) -> folds t) bs
 folds (Gen x t u) = folds t ++ folds u
 folds (Unfold f t) = filter (/=f) (folds t)
 folds (Fold f s) = [f]
+
+-- pretty printing
+
+prettyTree (Var x) = text x
+prettyTree (Abs x t) = text "\\" <> text x <> text "->" <> prettyTree t
+prettyTree (Cons c []) = text c
+prettyTree (Cons c ts) = text c <> parens (hcat $ punctuate comma $ map prettyTree ts)
+prettyTree (App t u) = prettyTree t <+> prettyTree u
+prettyTree (Choice t bs) = 
+   hang (text "case" <+> prettyTree t <+> text "of") 1 (blank <+> prettyTreeBranch (head bs) $$ vcat (map ((text "|" <+>).prettyTreeBranch) (tail bs))) where
+   prettyTreeBranch (c,[],t) = text c <+> text "->" <+> prettyTree t
+   prettyTreeBranch (c,xs,t) = text c <> parens(hcat $ punctuate comma $ map text xs) <+> text "->" <+> prettyTree t $$ empty
+prettyTree (Gen x t u) = (text "let" <+> text x <+> text "=" <+> prettyTree t) $$ (text "in" <+> prettyTree u)
+prettyTree (Unfold f t) = text "Unfold" <+> text f <+> text "=" <+> prettyTree t
+prettyTree (Fold f s) = text "Fold" <+> text f 
