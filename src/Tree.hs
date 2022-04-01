@@ -28,9 +28,6 @@ data Tree = Var String -- variable
           | Unfold String Tree -- unfold node
           | Fold String [(String,Tree)] -- fold node
 
-instance Show Tree where
-   show t = render $ prettyTree t
-
 matchChoice bs bs' = length bs == length bs' && all (\((c,xs,t),(c',xs',t')) -> c == c' && length xs == length xs') (zip bs bs')
 
 -- equality of process trees
@@ -227,18 +224,3 @@ folds (Choice t bs) = folds t ++ concatMap (\(c,xs,t) -> folds t) bs
 folds (Gen x t u) = folds t ++ folds u
 folds (Unfold f t) = filter (/=f) (folds t)
 folds (Fold f s) = [f]
-
--- pretty printing
-
-prettyTree (Var x) = text x
-prettyTree (Abs x t) = text "\\" <> text x <> text "->" <> prettyTree t
-prettyTree (Cons c []) = text c
-prettyTree (Cons c ts) = text c <> parens (hcat $ punctuate comma $ map prettyTree ts)
-prettyTree (App t u) = prettyTree t <+> prettyTree u
-prettyTree (Choice t bs) = 
-   hang (text "case" <+> prettyTree t <+> text "of") 1 (blank <+> prettyTreeBranch (head bs) $$ vcat (map ((text "|" <+>).prettyTreeBranch) (tail bs))) where
-   prettyTreeBranch (c,[],t) = text c <+> text "->" <+> prettyTree t
-   prettyTreeBranch (c,xs,t) = text c <> parens(hcat $ punctuate comma $ map text xs) <+> text "->" <+> prettyTree t $$ empty
-prettyTree (Gen x t u) = (text "let" <+> text x <+> text "=" <+> prettyTree t) $$ (text "in" <+> prettyTree u)
-prettyTree (Unfold f t) = text "Unfold" <+> text f <+> text "=" <+> prettyTree t
-prettyTree (Fold f s) = text "Fold" <+> text f 
