@@ -53,20 +53,11 @@ data Context = EmptyCtx
              | ApplyCtx Context Term
              | CaseCtx Context [(String,[String],Term)] deriving Show
 
-isEmpty EmptyCtx = True
-isEmpty con = False
-
 -- place term in context
 
 place t EmptyCtx = t
 place t (ApplyCtx con u) = place (Apply t u) con
 place t (CaseCtx con bs) = place (Case t bs) con
-
--- redex of a term
-
-redex (Case t bs) = redex t 
-redex (Apply t u) = redex t
-redex t = t
 
 matchCase bs bs' = length bs == length bs' && all (\((c,xs,t),(c',xs',t')) -> c == c' && length xs == length xs') (zip bs bs')
 
@@ -74,9 +65,6 @@ matchCase bs bs' = length bs == length bs' && all (\((c,xs,t),(c',xs',t')) -> c 
 
 inst t u = inst' t u []
 
-inst' (Free x) (Free x') s = if    x `elem` map fst s
-                             then [s | (x,Free x') `elem` s]
-                             else [(x,Free x'):s]
 inst' (Free x) t s = if    x `elem` map fst s
                      then [s | (x,t) `elem` s]
                      else [(x,t):s]
@@ -140,6 +128,8 @@ generalise' t u fv s1 s2 = case [x | (x,t') <- s1, (x',u') <- s2, x==x' && t==t'
                               (x:_) -> (Free x,s1,s2)
                               [] -> let x = renameVar (fv++map fst s1) "x"
                                     in  (Free x,(x,t):s1,(x,u):s2)
+
+makeLet s t = foldl (\u (x,t) -> Let x t (abstract u x)) t s
 
 -- evaluate a program
 
@@ -338,7 +328,6 @@ prettyAtom t = parens $ prettyTerm t
 
 prettyProg (t,d) = let d' = [f | f <- d, fst f `elem` funs (t,d)]          
                    in  prettyEnv (("main",([],t)):d')
-
 
 prettyEnv xs = vcat (punctuate semi $ map (\(f,(xs,t)) -> text f <+> hsep (map text xs) <+> equals <+> prettyTerm (foldr concrete t xs)) xs)
 

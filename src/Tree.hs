@@ -78,6 +78,9 @@ instTree' fs (Choice t bs) (Choice t' bs') r s | matchChoice bs bs' = foldr (\((
 instTree' fs (Gen x t u) (Gen x' t' u') r s = concat [instTree' fs u u' ((x,x'):r) s' | s' <- instTree' fs t t' r s]
 instTree' fs (Unfold f t) (Unfold f' t') r s = instTree' ((f,f'):fs) t t' r s
 instTree' fs (Fold f _) (Fold f' _) r s = [s | (f,f') `elem` fs]
+instTree' fs t u r s | appInst t u' = let (x,t') = appInstVal t u'
+                                      in  instTree' fs (Var x) t' r s 
+   where u' = renameTree (map swap r) u
 instTree' fs t t' r s = []
 
 -- homeomorphic embedding of process trees
@@ -106,35 +109,39 @@ diveTree fs t t' = False
 
 -- generalisation of process trees 
 
-generaliseTree t t' = generaliseTree' [] t t' (varsTree t) [] []
+generaliseTree t u = generaliseTree' [] t u (varsTree t) [] [] []
 
-generaliseTree' fs (Var x) (Var x') fv s1 s2 = (Var x,s1,s2)
-generaliseTree' fs (Var x) t fv s1 s2 | x `elem` freeTree t = (Var x,s1,(x,t):s2)
-generaliseTree' fs (Abs x t) (Abs x' t') fv s1 s2 = let (t'',s1',s2') = generaliseTree' fs t t' fv s1 s2
-                                                    in  (Abs x t'',s1',s2')
-generaliseTree' fs (Cons c ts) (Cons c' ts') fv s1 s2 | c==c' = let ((s1',s2'),ts'') = mapAccumL (\(s1,s2) (t,t') -> let (t'',s1',s2') = generaliseTree' fs t t' fv s1 s2
-                                                                                                                     in  ((s1',s2'),t'')) (s1,s2) (zip ts ts')
-                                                                in  (Cons c ts'',s1',s2')
-generaliseTree' fs (App t u) (App t' u') fv s1 s2 = let (t'',s1',s2') = generaliseTree' fs t t' fv s1 s2
-                                                        (u'',s1'',s2'') = generaliseTree' fs u u' fv s1' s2'
-                                                    in  (App t'' u'',s1'',s2'')
-generaliseTree' fs (Choice t bs) (Choice t' bs') fv s1 s2 | matchChoice bs bs' = let (t'',s1',s2') = generaliseTree' fs t t' fv s1 s2
-                                                                                     ((s1'',s2''),bs'') = mapAccumL (\(s1,s2) ((c,xs,t),(c',xs',t')) -> let (t'',s1',s2') = generaliseTree' fs t t' fv s1 s2
-                                                                                                                                                        in  ((s1',s2'),(c,xs,t''))) (s1',s2') (zip bs bs')                                                     
-                                                                                 in  (Choice t'' bs'',s1'',s2'')
-generaliseTree' fs (Gen x t u) (Gen x' t' u') fv s1 s2 = let (u'',s1',s2') = generaliseTree' fs u (renameTree [(x',x)] u') fv s1 s2
-                                                         in  if   x `elem` map fst s2'
-                                                             then let x' = renameVar (fv++map fst s1') "x"
-                                                                  in  (Gen x (Var x') u'',(x',t):s1',s2')
-                                                             else (Gen x t u'',s1',s2')
-generaliseTree' fs (Unfold f t) (Unfold f' t') fv s1 s2 = let (t'',s1',s2') = generaliseTree' ((f,f'):fs) t t' fv s1 s2
-                                                          in  (Unfold f t'',s1',s2')
-generaliseTree' fs (Fold f s) (Fold f' s') fv s1 s2 | (f,f') `elem` fs = (Fold f s,s1,s2)
-generaliseTree' fs t u fv s1 s2 = case [x | (x,t') <- s1, (x',u') <- s2, x==x' && t==t' && u==u'] of
-                                     (x:_) -> (Var x,s1,s2)
-                                     [] -> let x = renameVar (fv++map fst s1) "x"
-                                           in  (Var x,(x,t):s1,(x,u):s2)
+generaliseTree' fs (Var x) (Var x') fv r s1 s2 = (Var x,s1,s2)
+generaliseTree' fs t u fv r s1 s2 | appInst t u' = let (x,t') = appInstVal t u'
+                                                   in  (t,s1,(x,t'):s2)
+   where u' = renameTree (map swap r) u
+generaliseTree' fs t u fv r s1 s2 | coupleTree fs t u = generaliseTree'' fs t u fv r s1 s2
+generaliseTree' fs t u fv r s1 s2 = case [x | (x,t') <- s1, (x',u') <- s2, x==x' && t==t' && u==u'] of
+                                       (x:_) -> (Var x,s1,s2)
+                                       [] -> let x = renameVar (fv++map fst s1) "x"
+                                             in  (Var x,(x,t):s1,(x,u):s2)
 
+generaliseTree'' fs (Abs x t) (Abs x' t') fv r s1 s2 = let (t'',s1',s2') = generaliseTree' fs t t' fv ((x,x'):r) s1 s2
+                                                       in  (Abs x t'',s1',s2')
+generaliseTree'' fs (Cons c ts) (Cons c' ts') fv r s1 s2 = let ((s1',s2'),ts'') = mapAccumL (\(s1,s2) (t,t') -> let (t'',s1',s2') = generaliseTree' fs t t' fv r s1 s2
+                                                                                                                in  ((s1',s2'),t'')) (s1,s2) (zip ts ts')
+                                                           in  (Cons c ts'',s1',s2')
+generaliseTree'' fs (App t u) (App t' u') fv r s1 s2 = let (t'',s1',s2') = generaliseTree' fs t t' fv r s1 s2
+                                                           (u'',s1'',s2'') = generaliseTree' fs u u' fv r s1' s2'
+                                                       in  (App t'' u'',s1'',s2'')
+generaliseTree'' fs (Choice t bs) (Choice t' bs') fv r s1 s2 = let (t'',s1',s2') = generaliseTree' fs t t' fv r s1 s2
+                                                                   ((s1'',s2''),bs'') = mapAccumL (\(s1,s2) ((c,xs,t),(c',xs',t')) -> let (t'',s1',s2') = generaliseTree' fs t t' fv (zip xs xs' ++ r) s1 s2
+                                                                                                                                      in  ((s1',s2'),(c,xs,t''))) (s1',s2') (zip bs bs')                                                     
+                                                               in  (Choice t'' bs'',s1'',s2'')
+generaliseTree'' fs (Gen x t u) (Gen x' t' u') fv r s1 s2 = let (u'',s1',s2') = generaliseTree' fs u (renameTree [(x',x)] u') fv ((x,x):r) s1 s2
+                                                            in  if   x `elem` map fst s2'
+                                                                then let x' = renameVar (fv++map fst s1') "x"
+                                                                     in  (Gen x (Var x') u'',(x',t):s1',s2')
+                                                                else (Gen x t u'',s1',s2')
+generaliseTree'' fs (Unfold f t) (Unfold f' t') fv r s1 s2 = let (t'',s1',s2') = generaliseTree' ((f,f'):fs) t t' fv r s1 s2
+                                                             in  (Unfold f t'',s1',s2')
+generaliseTree'' fs (Fold f s) (Fold f' s') fv r s1 s2 | (f,f') `elem` fs = (Fold f s,s1,s2)
+                             
 makeGen s t = foldl (\u (x,t) -> Gen x t u) t s
 
 -- Final program residualisation
@@ -224,3 +231,10 @@ folds (Choice t bs) = folds t ++ concatMap (\(c,xs,t) -> folds t) bs
 folds (Gen x t u) = folds t ++ folds u
 folds (Unfold f t) = filter (/=f) (folds t)
 folds (Fold f s) = [f]
+
+appInst (Var x) u = x `elem` freeTree u
+appInst (App t (Var x)) u = appInst t (Abs x u)
+appInst t u = False
+
+appInstVal (Var x) u = (x,u)
+appInstVal (App t (Var x)) u = appInstVal t (Abs x u)

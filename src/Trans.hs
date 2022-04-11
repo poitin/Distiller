@@ -113,14 +113,15 @@ distill (Fun f) k fv m d = let t = returnval (super (Fun f) k fv [] d)
                                                      (t',s',d') = residualise t []
                                                      handler (f',t') = if   f==f'
                                                                        then let (u,s1,s2) = generaliseTree t t'
-                                                                            in  if   null s1
+                                                                            in  if   null s1 
                                                                                 then return u 
                                                                                 else let (u',s',d') = residualise u s1
+                                                                                         fv' = map fst s1 ++ fv
                                                                                      in  do
                                                                                          s'' <- mapM (\(x,t) -> do
-                                                                                                                t' <- distill t EmptyCtx fv m d'
+                                                                                                                t' <- distill t EmptyCtx fv' m d'
                                                                                                                 return (x,t')) s'
-                                                                                         u'' <- distill u' EmptyCtx (map fst s''++fv) m d'
+                                                                                         u'' <- distill u' EmptyCtx fv' m d'
                                                                                          return (makeGen s'' u'')
                                                                        else throw (f',t')
                                                  in  do
